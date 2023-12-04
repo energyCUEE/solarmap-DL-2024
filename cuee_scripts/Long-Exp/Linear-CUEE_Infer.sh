@@ -9,9 +9,9 @@ fi
 pred_len=4 
 label_len=0
 model_name=DLinear
-for seq_len in 24
+for seq_len in 24 128 
 do
-python -u run_longExp.py \
+python -u plot_longExp.py \
   --is_training 1 \
   --root_path ./dataset/CUEE/ \
   --data_path updated_measurement_Iclr_new.csv \
@@ -25,7 +25,7 @@ python -u run_longExp.py \
   --pred_len $pred_len \
   --enc_in 1 \
   --des 'Exp' \
-  --itr 1 --batch_size 128  --learning_rate 0.005 --individual >logs/LongForecasting/$model_name'_I_'CUEE_$seq_len'_'$label_len'_'$pred_len.log 
+  --itr 1    --learning_rate 0.005 --individual >logs/LongForecasting/$model_name'_I_'CUEE_$seq_len'_'$label_len'_'$pred_len.log 
  
 done
  

@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils import weight_norm
 import math
-
+import pdb
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, d_model, max_len=5000):
@@ -129,7 +129,7 @@ class DataEmbedding_wo_pos(nn.Module):
             d_model=d_model, embed_type=embed_type, freq=freq)
         self.dropout = nn.Dropout(p=dropout)
 
-    def forward(self, x, x_mark):
+    def forward(self, x, x_mark): 
         x = self.value_embedding(x) + self.temporal_embedding(x_mark)
         return self.dropout(x)
 

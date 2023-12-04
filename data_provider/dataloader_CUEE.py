@@ -76,9 +76,9 @@ class DatasetCUEE(data.Dataset):
         cols.remove('Datetime')
         cols.remove('Hour')
  
-
-        num_train = int(len(df_raw) * (0.7 if not self.train_only else 1))
-        num_test = int(len(df_raw) * 0.2)
+        print("Total %d Train %d Test %d" %( len(df_raw),   int(len(df_raw) * 0.70) , int(len(df_raw) * 0.2) ))
+        num_train = int(len(df_raw) * (0.7 )) # if not self.train_only else 1
+        num_test = int(len(df_raw) *0.2)
         num_vali = len(df_raw) - num_train - num_test
         border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
         border2s = [num_train, num_train + num_vali, len(df_raw)]
