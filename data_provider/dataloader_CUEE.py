@@ -30,7 +30,7 @@ def choose_daytimehours(data, start=1, end=9):
  
 class DatasetCUEE(data.Dataset):
     def __init__(self,  root_path = CUEE_ROOT, flag='train', size=None, features='S',  
-                data_path=CUEE_DATA, target='I', scale=True, timeenc=0, freq='h', train_only=False):
+                data_path=CUEE_DATA, target='I', scale=True, timeenc=0, freq='h', train_only=False, sampling_rate=1):
         super(DatasetCUEE, self).__init__()
 
         if size == None:
@@ -54,7 +54,7 @@ class DatasetCUEE(data.Dataset):
         self.train_only = train_only
         self.scaler = StandardScaler()
 
-
+        self.sampling_rate = sampling_rate
         self.root_path  = root_path    
         self.data_path  = data_path 
         self.__read_data__()
@@ -76,9 +76,9 @@ class DatasetCUEE(data.Dataset):
         cols.remove('Datetime')
         cols.remove('Hour')
  
-        print("Total %d Train %d Test %d" %( len(df_raw),   int(len(df_raw) * 0.70) , int(len(df_raw) * 0.2) ))
+        print("Total %d Train %d Test %d" %( len(df_raw),   int(len(df_raw) * 0.70) , int(len(df_raw) * 0.2* self.sampling_rate) ))
         num_train = int(len(df_raw) * (0.7 )) # if not self.train_only else 1
-        num_test = int(len(df_raw) *0.2)
+        num_test = int(len(df_raw) *0.2* self.sampling_rate)
         num_vali = len(df_raw) - num_train - num_test
         border1s = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
         border2s = [num_train, num_train + num_vali, len(df_raw)]
@@ -103,8 +103,6 @@ class DatasetCUEE(data.Dataset):
         else:
             data = df_data.values
 
- 
-
         df_stamp = df_raw[['Datetime']][border1:border2]
         df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)  
  
@@ -115,6 +113,7 @@ class DatasetCUEE(data.Dataset):
             df_stamp['hour'] = df_stamp.Datetime.apply(lambda row: row.hour, 1)  
             self.date_time  = npdatetime_to_string(df_stamp['Datetime'].values.copy()) 
             data_stamp = df_stamp.drop(['Datetime'], 1).values
+            
         elif self.timeenc == 1:
             data_stamp = time_features(pd.to_datetime(df_stamp['Datetime'].values), freq=self.freq)
             data_stamp = data_stamp.transpose(1, 0)

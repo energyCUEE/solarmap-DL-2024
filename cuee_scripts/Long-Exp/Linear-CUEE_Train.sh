@@ -8,8 +8,10 @@ fi
 
 pred_len=4 
 label_len=0
-model_name=DLinear
-for seq_len in 24
+
+for model_name in  Linear NLinear DLinear 
+do
+for seq_len in 24 128
 do
 python -u run_longExp.py \
   --is_training 1 \
@@ -27,5 +29,6 @@ python -u run_longExp.py \
   --des 'Exp' \
   --itr 1 --batch_size 128  --learning_rate 0.005 --individual >logs/LongForecasting/$model_name'_I_'CUEE_$seq_len'_'$label_len'_'$pred_len.log 
  
+done
 done
  
