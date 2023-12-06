@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
+import pdb
 
 class moving_avg(nn.Module):
     """
@@ -45,7 +46,7 @@ class Model(nn.Module):
         self.pred_len = configs.pred_len
 
         # Decompsition Kernel Size
-        kernel_size = 25
+        kernel_size = configs.moving_avg #25 
         self.decompsition = series_decomp(kernel_size)
         self.individual = configs.individual
         self.channels = configs.enc_in

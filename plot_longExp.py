@@ -96,9 +96,10 @@ print(args)
  
 
 ii = 0
-setting = '{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
+setting = '{}_{}_{}_mv{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
                                                                                                   args.model,
                                                                                                   args.data,
+                                                                                                  args.moving_avg,
                                                                                                   args.features,
                                                                                                   args.seq_len,
                                                                                                   args.label_len,

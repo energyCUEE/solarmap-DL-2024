@@ -7,10 +7,10 @@ if [ ! -d "./logs/LongForecasting" ]; then
 fi
 pred_len=4
 label_len=0 
-
+seq_len=37
 for model_name in  Autoformer Informer Transformer 
 do 
-for seq_len in 24 32 64 128
+for moving_avg in 7 25 37  
 do
   python -u run_longExp.py \
     --is_training 1 \
@@ -18,6 +18,7 @@ do
     --data_path updated_measurement_Iclr_new.csv \
     --model_id CUEEData_$seq_len'_'$pred_len \
     --model $model_name \
+    --moving_avg $moving_avg \
     --data CUEE \
     --features S \
     --target I \
@@ -32,6 +33,6 @@ do
     --dec_in 1 \
     --c_out  1 \
     --des 'Exp' \
-    --itr 1 >logs/LongForecasting/$model_name'_I_'CUEE_$seq_len'_'$label_len'_'$pred_len.log 
+    --itr 1 >'logs/LongForecasting/'$model_name'_I_CUEE_mv'$moving_avg'_'$seq_len'_'$label_len'_'$pred_len'.log' 
 done
 done 

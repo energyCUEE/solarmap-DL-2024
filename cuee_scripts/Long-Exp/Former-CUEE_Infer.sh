@@ -19,6 +19,7 @@ do
     --data_path updated_measurement_Iclr_new.csv \
     --model_id CUEEData_$seq_len'_'$pred_len \
     --model $model_name \
+    --moving_avg $moving_avg \
     --data CUEE \
     --features S \
     --target I \
@@ -33,7 +34,7 @@ do
     --dec_in 1 \
     --c_out 1 \
     --des 'Exp' \
-    --itr 1 >logs/LongForecasting/$model_name'_I_'CUEE_$seq_len'_'$label_len'_'$pred_len.log 
+    --itr 1 >'logs/LongForecasting/'$model_name'_I_CUEE_mv'$moving_avg'_'$seq_len'_'$label_len'_'$pred_len'.log' 
 done 
 model_name=DLinear
 python -u plot_longExp.py \
@@ -42,6 +43,7 @@ python -u plot_longExp.py \
   --data_path updated_measurement_Iclr_new.csv \
   --model_id CUEEData_$seq_len'_'$pred_len \
   --model $model_name \
+  --moving_avg $moving_avg \
   --data CUEE \
   --features S \
   --target I \
@@ -50,5 +52,5 @@ python -u plot_longExp.py \
   --pred_len $pred_len \
   --enc_in 1 \
   --des 'Exp' \
-  --itr 1   --learning_rate 0.005 --individual >logs/LongForecasting/$model_name'_I_'CUEE_$seq_len'_'$label_len'_'$pred_len.log 
+  --itr 1   --learning_rate 0.005 --individual >'logs/LongForecasting/'$model_name'_I_mv'$moving_avg'_CUEE_'$seq_len'_'$label_len'_'$pred_len'.log' 
 done 
