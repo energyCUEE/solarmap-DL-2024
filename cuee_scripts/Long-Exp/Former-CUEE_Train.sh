@@ -8,9 +8,9 @@ fi
 pred_len=4
 label_len=0 
 seq_len=37
-for model_name in  Autoformer Informer Transformer 
+for model_name in  Informer Transformer #  Autoformer  
 do 
-for moving_avg in 7 25 37  
+for moving_avg in  18 36 54 72 90 108 
 do
   python -u run_longExp.py \
     --is_training 1 \

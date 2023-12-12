@@ -278,26 +278,33 @@ class Exp_Main(Exp_Basic):
             test_params_flop((batch_x.shape[1],batch_x.shape[2]))
             exit()
             
-        preds = np.concatenate(preds, axis=0)
-        trues = np.concatenate(trues, axis=0)
-        inputx = np.concatenate(inputx, axis=0)
+        preds_np = np.concatenate(preds, axis=0)
+        trues_np = np.concatenate(trues, axis=0)
+        inputx_np  = np.concatenate(inputx, axis=0)
 
         # result save
         folder_path = './results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues)
+        mae, mse, rmse, mape, mspe, rse, corr = metric(preds_np, trues_np)
         print('mse:{}, mae:{}'.format(mse, mae))
-        f = open("result.txt", 'a')
+        f = open(folder_path + "result.txt", 'a')
         f.write(setting + "  \n")
         f.write('mse:{}, mae:{}, rse:{}, corr:{}'.format(mse, mae, rse, corr))
         f.write('\n')
         f.write('\n')
         f.close()
 
+        result_dict = {}
+        result_dict["inputx"] = inputx
+        result_dict["preds"] = preds
+        result_dict["trues"] = trues
+        result_dict["mae"] = mae
+        result_dict["mse"] = mse
+
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
-        np.save(folder_path + 'pred.npy', preds)
+        np.save(folder_path + 'result_dict.npy', result_dict) 
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
         return

@@ -8,10 +8,10 @@ fi
 
 pred_len=4 
 label_len=0
-moving_avg=74 
-for model_name in DLinear # Linear NLinear 
+moving_avg=37 
+for model_name in DLinear Linear NLinear  
 do
-for seq_len in 37
+for seq_len in 18 36 54 72 90 108
 do
 python -u run_longExp.py \
   --is_training 1 \
