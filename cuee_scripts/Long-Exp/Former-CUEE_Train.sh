@@ -6,11 +6,13 @@ if [ ! -d "./logs/LongForecasting" ]; then
     mkdir ./logs/LongForecasting
 fi
 pred_len=4
-label_len=0 
-seq_len=37
-for model_name in  Informer Transformer #  Autoformer  
-do 
-for moving_avg in  18 36 54 72 90 108 
+label_len=0  
+moving_avg=37
+batch_size=32
+model_name=Autoformer
+#  for model_name in  Autoformer # Informer Transformer #   
+#  do 
+for seq_len in  18 36 54 72 90 108 
 do
   python -u run_longExp.py \
     --is_training 1 \
@@ -33,6 +35,5 @@ do
     --dec_in 1 \
     --c_out  1 \
     --des 'Exp' \
-    --itr 1 >'logs/LongForecasting/'$model_name'_I_CUEE_mv'$moving_avg'_'$seq_len'_'$label_len'_'$pred_len'.log' 
-done
+    --batch_size $batch_size --itr 1 >'logs/LongForecasting/'$model_name'_I_CUEE_mv'$moving_avg'_'$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
 done 

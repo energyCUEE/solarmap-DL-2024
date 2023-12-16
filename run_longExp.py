@@ -97,12 +97,13 @@ Exp = Exp_Main
 if args.is_training:
     for ii in range(args.itr):
         # setting record of experiments
-        setting = '{}_{}_{}_mv{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
+        setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
             args.model_id,
             args.model,
             args.data,
             args.moving_avg,
             args.features,
+            args.batch_size,
             args.seq_len,
             args.label_len,
             args.pred_len,
@@ -131,11 +132,12 @@ if args.is_training:
         torch.cuda.empty_cache()
 else:
     ii = 0
-    setting = '{}_{}_{}_mv{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
+    setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
                                                                                                   args.model,
                                                                                                   args.data,
                                                                                                   args.moving_avg,
                                                                                                   args.features,
+                                                                                                  args.batch_size,
                                                                                                   args.seq_len,
                                                                                                   args.label_len,
                                                                                                   args.pred_len,
