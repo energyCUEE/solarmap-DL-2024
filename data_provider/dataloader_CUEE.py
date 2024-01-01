@@ -89,8 +89,7 @@ class DatasetCUEE(data.Dataset):
 
         for station_num in self.stations_list:
             df_raw     = choose_stations(df_raw_time, station_num_list=[station_num])  
-
-  
+            
             cols = list(df_raw.columns)
             if self.features == 'S':
                 cols.remove(self.target)
