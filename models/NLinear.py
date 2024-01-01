@@ -16,7 +16,7 @@ class Model(nn.Module):
         # self.Linear.weight = nn.Parameter((1/self.seq_len)*torch.ones([self.pred_len,self.seq_len]))
         self.channels = configs.enc_in
         self.individual = configs.individual
-        if self.individual:
+        if self.individual == 1:
             self.Linear = nn.ModuleList()
             for i in range(self.channels):
                 self.Linear.append(nn.Linear(self.seq_len,self.pred_len))
@@ -27,7 +27,7 @@ class Model(nn.Module):
         # x: [Batch, Input length, Channel]
         seq_last = x[:,-1:,:].detach()
         x = x - seq_last
-        if self.individual:
+        if self.individual == 1:
             output = torch.zeros([x.size(0),self.pred_len,x.size(2)],dtype=x.dtype).to(x.device)
             for i in range(self.channels):
                 output[:,:,i] = self.Linear[i](x[:,:,i])

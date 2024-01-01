@@ -51,7 +51,7 @@ class Model(nn.Module):
         self.individual = configs.individual
         self.channels = configs.enc_in
 
-        if self.individual:
+        if self.individual == 1:
             self.Linear_Seasonal = nn.ModuleList()
             self.Linear_Trend = nn.ModuleList()
             
@@ -74,7 +74,7 @@ class Model(nn.Module):
         # x: [Batch, Input length, Channel]
         seasonal_init, trend_init = self.decompsition(x)
         seasonal_init, trend_init = seasonal_init.permute(0,2,1), trend_init.permute(0,2,1)
-        if self.individual:
+        if self.individual == 1:
             seasonal_output = torch.zeros([seasonal_init.size(0),seasonal_init.size(1),self.pred_len],dtype=seasonal_init.dtype).to(seasonal_init.device)
             trend_output = torch.zeros([trend_init.size(0),trend_init.size(1),self.pred_len],dtype=trend_init.dtype).to(trend_init.device)
             for i in range(self.channels):
