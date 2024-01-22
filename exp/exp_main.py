@@ -1,6 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST
+from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST, RLSTM
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric
 
@@ -11,6 +11,7 @@ import torch.nn as nn
 from torch import optim
 from torch.optim import lr_scheduler 
 
+import pdb
 import os
 import time
 
@@ -33,6 +34,7 @@ class Exp_Main(Exp_Basic):
             'NLinear': NLinear,
             'Linear': Linear,
             'PatchTST': PatchTST,
+            'RLSTM': RLSTM
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -69,7 +71,7 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if 'Linear' in self.args.model or 'TST' in self.args.model:
+                        if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -77,7 +79,7 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if 'Linear' in self.args.model or 'TST' in self.args.model:
+                    if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
                         outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
@@ -147,7 +149,7 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if 'Linear' in self.args.model or 'TST' in self.args.model:
+                        if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -161,7 +163,7 @@ class Exp_Main(Exp_Basic):
                         loss = criterion(outputs, batch_y)
                         train_loss.append(loss.item())
                 else:
-                    if 'Linear' in self.args.model or 'TST' in self.args.model:
+                    if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model: 
                             outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
@@ -170,7 +172,7 @@ class Exp_Main(Exp_Basic):
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
                     # print(outputs.shape,batch_y.shape)
-                    f_dim = -1 if self.args.features == 'MS' else 0
+                    f_dim = -1 if self.args.features == 'MS' else 0 
                     outputs = outputs[:, -self.args.pred_len:, f_dim:]
                     batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
                     loss = criterion(outputs, batch_y)
@@ -253,7 +255,7 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if 'Linear' in self.args.model or 'TST' in self.args.model:
+                        if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -261,7 +263,7 @@ class Exp_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if 'Linear' in self.args.model or 'TST' in self.args.model:
+                    if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
                             outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
@@ -292,13 +294,14 @@ class Exp_Main(Exp_Basic):
         if self.args.test_flop:
             test_params_flop((batch_x.shape[1],batch_x.shape[2]))
             exit()
-        preds = np.array(preds)
-        trues = np.array(trues)
-        inputx = np.array(inputx)
+ 
+        preds = np.concatenate(preds, axis=0)
+        trues = np.concatenate(trues, axis=0)
+        inputx = np.concatenate(inputx, axis=0)
 
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        inputx = inputx.reshape(-1, inputx.shape[-2], inputx.shape[-1])
+        # preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
+        # trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
+        # inputx = inputx.reshape(-1, inputx.shape[-2], inputx.shape[-1])
 
         # result save
         folder_path = './results/' + setting + '/'
@@ -307,7 +310,7 @@ class Exp_Main(Exp_Basic):
 
         mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues)
         print('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
-        f = open("result.txt", 'a')
+        f = open(folder_path + "result.txt", 'a')
         f.write(setting + "  \n")
         f.write('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
         f.write('\n')
