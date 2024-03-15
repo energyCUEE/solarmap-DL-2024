@@ -33,6 +33,3 @@ python -u plot_longExp.py \
   --enc_in $num_features \
   --des 'Exp' \
   --itr 1 --batch_size $batch_size  --learning_rate 0.005 --individual >'logs/LongForecasting/'$model_name"_"$feature_type"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
-  
- 
- 

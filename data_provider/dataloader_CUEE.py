@@ -38,11 +38,10 @@ class DatasetCUEE(data.Dataset):
                 data_path=CUEE_DATA, target='I', scale=True, timeenc=0, freq='h', train_only=False, sampling_rate=1):
         super(DatasetCUEE, self).__init__()
 
-        self.stations_list = [ 'ISL009', 'ISL015', 'ISL019', 'ISL020', 'ISL027', 'ISL028', 'ISL038', 'ISL043',
-                               'ISL012', 'ISL013', 'ISL017', 'ISL018', 'ISL021', 'ISL022', 'ISL025', 'ISL026', 'ISL030', 'ISL031', 'ISL039', 'ISL041',
-                               'ISL014', 'ISL029', 'ISL034', 'ISL037',
-                               'ISL023', 'ISL024', 'ISL040', 'ISL044',  'ISL049', 'ISL050', 'ISL051', 'ISL052', 'ISL053', 'ISL054', 'ISL055',
-                               'ISL001', 'ISL002', 'ISL003', 'ISL004', 'ISL005', 'ISL006', 'ISL007', 'ISL008', 'ISL010', 'ISL011', 'ISL016',  'ISL033', 'ISL035', 'ISL036', 'ISL042', 'ISL046', 'ISL047', 'ISL048', 'ISL056' ]
+
+        file = open('./data_provider/stations.txt', 'r') 
+        stations_list = file.readlines()  
+        self.stations_list = [ station_.split("\n")[0] for station_ in stations_list] 
         # exclude 032 and 045
 
         if size == None:
@@ -82,10 +81,10 @@ class DatasetCUEE(data.Dataset):
         raw_data      = read_data[['Datetime', "site_name", "Iclr", "latt", "long", "I"]].copy() 
 
         raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
-        raw_data["hour"]  = [ date.hour for date in raw_data['Datetime'] ]
-        raw_data['day']   = [ date.day for date in raw_data['Datetime'] ]
-        raw_data['month'] = [ date.month for date in raw_data['Datetime'] ]
-        raw_data['minute'] = [ date.minute for date in raw_data['Datetime'] ]
+        raw_data["hour"]         = [ date.hour for date in raw_data['Datetime'] ]
+        raw_data['day']          = [ date.day for date in raw_data['Datetime'] ]
+        raw_data['month']        = [ date.month for date in raw_data['Datetime'] ]
+        raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
 
         # Shift Iclr to one step in feature and use it as a feature...
         new_df = pd.DataFrame(raw_data.shift(-self.seq_len).values, columns=raw_data.columns) 
