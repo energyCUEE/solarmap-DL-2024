@@ -9,7 +9,7 @@ CUEE_DATA = 'updated_measurement_Iclr_new.csv'
 
 if __name__ == "__main__":
  
-    dataset    = DatasetCUEE(root_path = CUEE_ROOT, flag='train', size=None, features='S', data_path=CUEE_DATA, target='I', scale=True, timeenc=0, freq='h', train_only=False)
+    dataset    = DatasetCUEE(root_path = CUEE_ROOT, flag='train', size=None, features='M', data_path=CUEE_DATA, target='I', scale=True, timeenc=0, freq='h', train_only=False)
     dataloader = DataLoader(dataset)
     for data_ in dataloader:
         seq_x, seq_y, seq_x_mark, seq_y_mark  = data_ 

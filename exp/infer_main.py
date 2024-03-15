@@ -17,6 +17,7 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
+import pdb
 
 warnings.filterwarnings('ignore')
 
@@ -64,7 +65,8 @@ class Infer_Main(Exp_Basic):
         preds = []
         trues = []
         inputx = []
-        folder_path = './infer_results/' + setting + '/'
+        timestamp_y = []
+        folder_path = './results_per_sample/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -116,6 +118,7 @@ class Infer_Main(Exp_Basic):
                 preds.append(pred)
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy())
+                timestamp_y.append(batch_y_mark)
                 if i % 20 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
@@ -134,24 +137,37 @@ class Infer_Main(Exp_Basic):
 
         # result save
 
+        mae_list = []
+        mse_list = []
+        
+        folder_path = './results/' + setting + '/'
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
 
-        mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues)
-        print('mse:{}, mae:{}'.format(mse, mae))
+        f = open(folder_path + "result.txt", 'a')
+        f.write(setting + "  \n")
 
-        # folder_path = './results/' + setting + '/'
-        # if not os.path.exists(folder_path):
-        #     os.makedirs(folder_path)
-        #
-        # f = open("result.txt", 'a')
-        # f.write(setting + "  \n")
-        # f.write('mse:{}, mae:{}, rse:{}, corr:{}'.format(mse, mae, rse, corr))
-        # f.write('\n')
-        # f.write('\n')
-        # f.close()
+        for seq_i in range(self.args.pred_len): 
+            preds_rev = test_data.inverse_transform(preds[:,seq_i,:])
+            trues_rev = test_data.inverse_transform(trues[:,seq_i,:])
+            mae, mse, rmse, mape, mspe, rse, corr = metric(preds_rev, trues_rev)
+            mae_list.append(mae)
+            mse_list.append(mse)
+            f.write('mse:{}, mae:{}, rse:{}, corr:{}'.format(mse, mae, rse, corr))
+            f.write('\n')
 
-        # # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
-        # np.save(folder_path + 'pred.npy', preds)
-        # # np.save(folder_path + 'true.npy', trues)
-        # # np.save(folder_path + 'x.npy', inputx)
-        return preds, trues, inputx, mse, mae
+        
+
+        print('mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
+        
+        f.write('OVERALL: mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
+       
+        f.close()
+        
+
+        # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
+        np.save(folder_path + 'pred.npy', preds)
+        # np.save(folder_path + 'true.npy', trues)
+        # np.save(folder_path + 'x.npy', inputx)
+        return preds, trues, timestamp_y, mae_list, mse_list, test_data
 

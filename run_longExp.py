@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
 
     # DLinear
-    #parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
+    parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
 
     # PatchTST
     parser.add_argument('--fc_dropout', type=float, default=0.05, help='fully connected dropout')
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser.add_argument('--subtract_last', type=int, default=0, help='0: subtract mean; 1: subtract last')
     parser.add_argument('--decomposition', type=int, default=0, help='decomposition; True 1 False 0')
     parser.add_argument('--kernel_size', type=int, default=25, help='decomposition-kernel')
-    parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
+    #parser.add_argument('--individual', type=int, default=0, help='individual head; True 1 False 0')
 
     # Formers 
     parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_heads',    type=int, default=8, help='num of heads')
     parser.add_argument('--e_layers',   type=int, default=2, help='num of encoder layers')
     parser.add_argument('--d_layers',   type=int, default=1, help='num of decoder layers')
-    parser.add_argument('--d_ff',       type=int, default=2048, help='dimension of fcn')
+    parser.add_argument('--d_ff',       type=int, default=128, help='dimension of fcn')
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
     parser.add_argument('--factor', type=int, default=1, help='attn factor')
     parser.add_argument('--distil', action='store_false',

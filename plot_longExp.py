@@ -5,7 +5,31 @@ from exp.infer_main import Infer_Main
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-import pdb
+import pdb 
+
+from datetime import datetime, timedelta
+
+def datetime2str(time_stamp, format="%d-%H:%M"):
+    pdb.set_trace()
+    string_timestamp =(datetime(*np.array(time_stamp)) +  timedelta(hours=7)).strftime(format)
+    return string_timestamp
+
+def time2string(time_stamp_list, pred_len, batch_size):
+
+    time_predictions = []
+
+    for time_stamp_batch in time_stamp_list:
+
+        time_predictions_array = []
+        for time_stamp_ in time_stamp_batch.tolist(): 
+            
+            for pred_len_ind in range(pred_len):
+                time_predictions_array.append(datetime2str(time_stamp_[pred_len_ind]) ) 
+    
+        time_predictions.append(np.array(time_predictions_array).reshape([batch_size, pred_len]))
+
+    return time_predictions
+
 
 fix_seed = 2021
 random.seed(fix_seed)
@@ -39,7 +63,7 @@ parser.add_argument('--pred_len', type=int, default=96, help='prediction sequenc
 
 
 # DLinear
-#parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
+parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
 # Formers 
 parser.add_argument('--embed_type', type=int, default=0, help='0: default 1: value embedding + temporal embedding + positional embedding 2: value embedding + temporal embedding 3: value embedding + positional embedding 4: value embedding')
 parser.add_argument('--enc_in', type=int, default=7, help='encoder input size') # DLinear with --individual, use this hyperparameter as the number of channels
@@ -49,7 +73,7 @@ parser.add_argument('--d_model', type=int, default=512, help='dimension of model
 parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
 parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
 parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
-parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')
+parser.add_argument('--d_ff', type=int, default=128, help='dimension of fcn')
 parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
 parser.add_argument('--factor', type=int, default=1, help='attn factor')
 parser.add_argument('--distil', action='store_false',
@@ -96,63 +120,72 @@ print(args)
  
 
 ii = 0
-setting = '{}_{}_{}_mv{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
-                                                                                                  args.model,
-                                                                                                  args.data,
-                                                                                                  args.moving_avg,
-                                                                                                  args.features,
-                                                                                                  args.seq_len,
-                                                                                                  args.label_len,
-                                                                                                  args.pred_len,
-                                                                                                  args.d_model,
-                                                                                                  args.n_heads,
-                                                                                                  args.e_layers,
-                                                                                                  args.d_layers,
-                                                                                                  args.d_ff,
-                                                                                                  args.factor,
-                                                                                                  args.embed,
-                                                                                                  args.distil,
-                                                                                                  args.des, ii)
+setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
+            args.model_id,
+            args.model,
+            args.data,
+            args.moving_avg,
+            args.features,
+            args.batch_size,
+            args.seq_len,
+            args.label_len,
+            args.pred_len,
+            args.d_model,
+            args.n_heads,
+            args.e_layers,
+            args.d_layers,
+            args.d_ff,
+            args.factor,
+            args.embed,
+            args.distil,
+            args.des, ii)
 
 exp = Infer_Main(args)  # set experiments 
  
 print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
-preds, trues, inputx, mse, mae = exp.run(setting, test=1)
-torch.cuda.empty_cache()
- 
-refvec_plot = []
+preds, trues, time_predictions,  mae, mse, test_data = exp.run(setting, test=1) 
 
+
+if not(args.embed == "timeF"):
+    time_predictions = time2string(time_predictions, args.pred_len, args.batch_size)
+    time_predictions = np.concatenate(time_predictions, axis=0)  
+
+refvec_plot = [] 
 seq_len = args.seq_len 
 pred_len = args.pred_len 
 
-num_samples = 100 
+num_pred = 500 
+start = random.randint(0, preds.shape[0])
+stop = start + num_pred 
 
-for ind, (batch_x, true, pred) in enumerate(zip(inputx[0:num_samples], trues[0:num_samples], preds[0:num_samples])):
-    if ind == num_samples:
-        refvec_plot.append(true[:])
-    elif ind == 0: 
-        refvec_plot.append(np.concatenate([batch_x[:], true[:-(pred_len - 1)]]))
+fig, ax = plt.subplots(4,1, figsize=(20,15), sharey=True)  
+horizon_list = [15, 30, 45, 60] 
+
+
+folder_path = './results/%s/pred-%d.png' % (setting, pred_len)
+               
+for pred_index in range(pred_len):
+
+    if not(args.embed == "timeF"):
+        time_predictions_ = time_predictions[start:stop,pred_index].reshape([-1])
+    groundtruth_      = trues[start:stop,pred_index].reshape([-1])
+    predictions_      = preds[start:stop,pred_index].reshape([-1]) 
+ 
+    time_x = np.arange(len(groundtruth_))  
+    time_x_tick = np.arange(0, len(groundtruth_), 36)
+
+    ax[pred_index].plot(time_x, groundtruth_, label='actual', color="black")
+    ax[pred_index].plot(time_x, predictions_, label='LSTM', color="red")
+    ax[pred_index].set_xticks(time_x_tick)
+    if not(args.embed == "timeF"):
+        ax[pred_index].set_xticklabels(time_predictions_[time_x_tick] , rotation=45, ha='right') 
     else:
-        refvec_plot.append(true[:-(pred_len - 1)])
+        ax[pred_index].set_xticklabels(time_x_tick/36, rotation=45, ha='right') 
+    ax[pred_index].set_title("MAE %0.2f @ Horrizon %d mins ahead" % (mae[pred_index], horizon_list[pred_index]))
+    ax[pred_index].legend()  
+    ax[pred_index].grid(True)
+    ax[pred_index].set_ylabel("$Watt/m^2$")
 
-refvec_plot_vect = np.concatenate(refvec_plot)   
-
-plt.figure(figsize=(25,5))
-plt.plot(np.arange(refvec_plot_vect.shape[0]), refvec_plot_vect , "b", linewidth=2, label="Ground Truth")  
-x_axis = np.arange(refvec_plot_vect.shape[0]) 
-
-for ind, (batch_x, true, pred) in enumerate(zip(inputx[0:num_samples], trues[0:num_samples], preds[0:num_samples])):
-    ind_ = ind + seq_len - 1  
-    if ind == num_samples-1:
-        plt.plot(np.arange(ind_,ind_+pred[:].shape[0] + 1), np.concatenate([batch_x[-1:], pred[:]]) , "--r", linewidth=1, label="%s-%d" % (args.model, seq_len))
-    else:
-        plt.plot(np.arange(ind_,ind_+pred[:].shape[0] + 1), np.concatenate([batch_x[-1:], pred[:]]) , "--r", linewidth=1)
-
-plt.text(seq_len-24, 2.5, "MSE:%.2f, MAE:%.2f" % (mse, mae), ha='left', va='top')
-plt.ylabel("Predicted I")
-plt.xlabel("Samples")
-plt.xticks(np.arange(0, refvec_plot_vect.shape[0], 4))   
-plt.xlim([seq_len-24, seq_len -24 + 120])
-plt.legend()     
-plt.grid(True)
-plt.savefig("plot_%s.png" % setting)   
+plt.tight_layout()   
+plt.savefig(folder_path)
+            

@@ -6,14 +6,19 @@ if [ ! -d "./logs/LongForecasting" ]; then
     mkdir ./logs/LongForecasting
 fi
 
-pred_len=4 
-label_len=0
-moving_avg=37 
-batch_size=128
+pred_len=4
+label_len=0  
+moving_avg=37
+batch_size=32  
+seq_len=24
+target=I
+
+# we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
+feature_type=MS 
+num_features=9
+
 for model_name in DLinear Linear NLinear
-do
-for seq_len in 18 36 54 72 90 108
-do
+do 
 python -u run_longExp.py \
   --is_training 1 \
   --root_path ./dataset/CUEE/ \
@@ -22,15 +27,14 @@ python -u run_longExp.py \
   --model $model_name \
   --moving_avg $moving_avg \
   --data CUEE \
-  --features S \
-  --target I \
+  --features $feature_type \
+  --target $target \
   --seq_len $seq_len \
   --label_len $label_len\
   --pred_len $pred_len \
-  --enc_in 1 \
+  --enc_in $num_features \
   --des 'Exp' \
-  --itr 1 --batch_size $batch_size  --learning_rate 0.005 --individual >'logs/LongForecasting/'$model_name'_I_mv'$moving_avg'_CUEE_'$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
- 
-done
+  --itr 1 --batch_size $batch_size  --learning_rate 0.005 --individual >'logs/LongForecasting/'$model_name"_"$feature_type"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
+  
 done
  

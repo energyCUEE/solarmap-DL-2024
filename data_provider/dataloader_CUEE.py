@@ -24,7 +24,7 @@ def npdatetime_to_string(numpy_array):
 #     return [npdatetime_to_string(date_time) for date_time in Datetime_values] 
 
 def choose_daytimehours(data, start=1, end=9):  
-    daytimehours  = [ True if (hour <=end) and (hour >= start)  else False for hour in data["Hour"] ]
+    daytimehours  = [ True if (hour <=end) and (hour >= start)  else False for hour in data["hour"] ]
     data_ = data.iloc[daytimehours].copy()
     return data_
 
@@ -64,7 +64,8 @@ class DatasetCUEE(data.Dataset):
         self.timeenc    = timeenc
         self.freq       = freq
         self.train_only = train_only
-        self.scaler = StandardScaler()
+        self.scaler_x = StandardScaler()
+        self.scaler_y = StandardScaler()
 
         self.sampling_rate = sampling_rate
         self.root_path  = root_path    
@@ -76,10 +77,22 @@ class DatasetCUEE(data.Dataset):
         raw_data = []
 
         read_data     = pd.read_csv(os.path.join(self.root_path, self.data_path) ) #'updated_measurement_Iclr_new.csv' 
-        raw_data      = read_data[['Datetime', "site_name", "I", "Iclr"]].copy()    
+
+        # If you want more feature .... you may add them here ....
+        raw_data      = read_data[['Datetime', "site_name", "Iclr", "latt", "long", "I"]].copy() 
+
         raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
- 
-        raw_data["Hour"] = [ date.hour for date in raw_data['Datetime'] ]
+        raw_data["hour"]  = [ date.hour for date in raw_data['Datetime'] ]
+        raw_data['day']   = [ date.day for date in raw_data['Datetime'] ]
+        raw_data['month'] = [ date.month for date in raw_data['Datetime'] ]
+        raw_data['minute'] = [ date.minute for date in raw_data['Datetime'] ]
+
+        # Shift Iclr to one step in feature and use it as a feature...
+        new_df = pd.DataFrame(raw_data.shift(-self.seq_len).values, columns=raw_data.columns) 
+        new_df = new_df.drop(new_df.index[-1])  
+        new_df.rename(columns={'Iclr':'Iclr_future'}, inplace=True) 
+        new_df = new_df['Iclr_future']  
+        raw_data = pd.concat([raw_data, new_df], axis=1)
 
         df_raw_time = choose_daytimehours(raw_data, start=1, end=9) 
         
@@ -94,7 +107,7 @@ class DatasetCUEE(data.Dataset):
             if self.features == 'S':
                 cols.remove(self.target)
             cols.remove('Datetime')
-            cols.remove('Hour')
+            cols.remove('hour')
     
             #print("[%s] Total %d Train %d Test %d" %( station_num, len(df_raw),   int(len(df_raw) * 0.70) , int(len(df_raw) * 0.2* self.sampling_rate) ))
             num_train = int(len(df_raw) * (0.7 )) # if not self.train_only else 1
@@ -106,40 +119,55 @@ class DatasetCUEE(data.Dataset):
             border1   = border1s[self.set_type]
             border2   = border2s[self.set_type]  
 
+            # select data for x,y from boarder and feawtures... 
+
             if self.features == 'M' or self.features == 'MS':
-                df_raw     = df_raw[['Datetime'] + cols]
-                cols_data  = df_raw.columns[1:]
+                # The last attribute is also a target attribute ... 
+                df_raw     = df_raw[['Datetime', 'Iclr','Iclr_future', 'latt', 'long', 'day', 'month', 'hour', 'minute', 'I']]
+                cols_data  = df_raw.columns[1:] 
                 df_data    = df_raw[cols_data]
+
             elif self.features == 'S':
                 df_raw     = df_raw[['Datetime'] + cols + [self.target]]
                 df_data    = df_raw[[self.target]] 
 
             if self.scale:
                 train_data = df_data[border1s[0]:border2s[0]]
-                self.scaler.fit(train_data.values)
-                # print(self.scaler.mean_)
-                # exit()
-                data = self.scaler.transform(df_data.values)
+                self.scaler_x.fit(train_data[cols_data[:-1]].values) 
+                data_x = self.scaler_x.transform(df_data[cols_data[:-1]].values)
+
+                self.scaler_y.fit(train_data[cols_data[-1]].values.reshape(-1,1)) 
+                data_y = self.scaler_y.transform(df_data[cols_data[-1]].values.reshape(-1,1))
+ 
+                data = np.concatenate([data_x,data_y], axis=1)
+
             else:
                 data = df_data.values
 
+            # time stamp 
+
             df_stamp = df_raw[['Datetime']][border1:border2]
             df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)  
-    
+             
             if self.timeenc == 0:
-                df_stamp['month'] = df_stamp.Datetime.apply(lambda row: row.month, 1)
-                df_stamp['day'] = df_stamp.Datetime.apply(lambda row: row.day, 1)
+                df_stamp['month']   = df_stamp.Datetime.apply(lambda row: row.month, 1)
+                df_stamp['day']     = df_stamp.Datetime.apply(lambda row: row.day, 1)
                 df_stamp['weekday'] = df_stamp.Datetime.apply(lambda row: row.weekday(), 1)
-                df_stamp['hour'] = df_stamp.Datetime.apply(lambda row: row.hour, 1)  
-                self.date_time  = npdatetime_to_string(df_stamp['Datetime'].values.copy())  
-                data_stamp = df_stamp.drop(['Datetime'],  axis=1).values 
+                df_stamp['hour']    = df_stamp.Datetime.apply(lambda row: row.hour, 1)  
+                df_stamp['min']     = df_stamp.Datetime.apply(lambda row: row.minute, 1)   
+
+                self.date_time      = npdatetime_to_string(df_stamp['Datetime'].values.copy())  
+                data_stamp          = df_stamp.drop(['Datetime'],  axis=1).values 
                 
             elif self.timeenc == 1:
                 data_stamp = time_features(pd.to_datetime(df_stamp['Datetime'].values), freq=self.freq)
                 data_stamp = data_stamp.transpose(1, 0)
 
+            # putting them into x and y  
+                 
             data_x_list.append(data[border1:border2])
-            data_y_list.append(data[border1:border2] ) 
+            data_y_list.append(data[border1:border2])   
+
             data_stamp_list.append(data_stamp)
 
  
@@ -169,7 +197,8 @@ class DatasetCUEE(data.Dataset):
         return len(self.data_x) - self.seq_len - self.pred_len + 1
     
     def inverse_transform(self, data):
-        return self.scaler.inverse_transform(data)
+        return self.scaler_y.inverse_transform(data)
+ 
  
 
 if __name__ == "__main__":
