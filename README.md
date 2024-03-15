@@ -7,7 +7,12 @@
 ./cuee_scripts/Long-Exp/Linear-CUEE_Train.sh
 
 ```
-  Note that you still need to customize the model parameters, as these parameters are set as an example. They may not be the best set of parameters for your cases.
+  - The results of the training will be saved in 
+    - `checkpoints` folder. For example, ...
+      `./checkpoints/CUEEData_24_4_DLinear_CUEE_mv37_.../checkpoint.pth` which is the trained weights.
+    - `logs` folder. For example, ...
+      `./logs/CUEEData_24_4_DLinear_CUEE_mv37_....log` which is the saved screen of your command promt.
+  - Note that you still need to customize the model parameters, as these parameters are set as an example. They may not be the best   set of parameters for your cases.
 
 3. Then, you may run another script to get the following plot:
 
@@ -15,8 +20,17 @@
 ./cuee_scripts/Long-Exp/Linear-CUEE_InferPlot.sh
 
 ```
+  - The results of the training will be saved in 
+    - `logs` folder. For example, ...
+      `./logs/CUEEData_24_4_DLinear_CUEE_mv37_....log` which is the saved screen of your command promt.
 
-Example output:
+    - `results` folder. For example, ...
+      `./results/CUEEData_24_4_DLinear_CUEE_mv37_.../....png and npy` which are the plots and stats of the algorithm performance.
+
+    - `checkpoints` folder. For example, ...
+      `./checkpoints/CUEEData_24_4_DLinear_CUEE_mv37_.../checkpoint.pth` which are the plot for each input/ouput sample.
+
+Example output (can be found in `results` folder):
 
 ![image](pics/pred-4.png)
 
