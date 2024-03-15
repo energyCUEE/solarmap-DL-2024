@@ -22,8 +22,8 @@ num_features=8
 model_name=Informer 
 
 
-python -u run_longExp.py \
-    --is_training 1 \
+python -u plot_longExp.py \
+    --is_training 0 \
     --root_path ./dataset/CUEE/ \
     --data_path updated_measurement_Iclr_new.csv \
     --model_id CUEEData_$seq_len'_'$pred_len \

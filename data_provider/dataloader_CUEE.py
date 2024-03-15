@@ -122,7 +122,7 @@ class DatasetCUEE(data.Dataset):
 
             if self.features == 'M' or self.features == 'MS':
                 # The last attribute is also a target attribute ... 
-                df_raw     = df_raw[['Datetime', 'Iclr','Iclr_future', 'latt', 'long', 'day', 'month', 'hour', 'minute', 'I']]
+                df_raw     = df_raw[['Datetime', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute', 'I']]
                 cols_data  = df_raw.columns[1:] 
                 df_data    = df_raw[cols_data]
 
