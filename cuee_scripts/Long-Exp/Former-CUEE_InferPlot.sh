@@ -21,7 +21,7 @@ num_features=8
 model_name=Informer # Transformer # Autoformer
 mode=val # test val 
 
-for d_model in 8 16 32 64 128
+for d_model in 8 16 32 64 128 256 512
 do
     python -u plot_longExp.py \
         --mode $mode \

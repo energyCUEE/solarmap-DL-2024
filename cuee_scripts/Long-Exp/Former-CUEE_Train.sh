@@ -21,7 +21,7 @@ d_model=32
 
 model_name=Informer 
 
-for d_model in 8 16 32 128
+for d_model in 8 16 32 128 256 512
 do
     python -u run_longExp.py \
         --is_training 1 \
