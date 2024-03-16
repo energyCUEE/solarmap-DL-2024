@@ -45,7 +45,7 @@ python -u run_longExp.py \
     --patch_len $patch_len\
     --stride $stride \
     --des 'Exp' \
-    --train_epochs 20\
+    --train_epochs 10\
     --patience 3\
     --lradj 'TST'\
     --pct_start 0.3\

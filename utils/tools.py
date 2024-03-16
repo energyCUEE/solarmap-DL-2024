@@ -3,7 +3,8 @@ import torch
 import matplotlib.pyplot as plt
 import time
 import os
-
+import pdb
+import csv
 plt.switch_backend('agg')
 
 
@@ -118,11 +119,19 @@ def test_params_flop(model,x_shape):
 
 
 def save_settings(args, setting, num_params):
-    
-    with open(os.path.join('./checkpoints/' + setting, 'model_setting.txt'), 'w') as file :
-        args_dict = vars(args)
+    args_dict = vars(args)
+    with open(os.path.join('./checkpoints/' + setting, 'model_setting.txt'), 'w') as file : 
         for key,value in args_dict.items():
-            file.write("%s:%s\n" % (key,value))
+            file.write("%s:%s\n" % (key, value))  
+        file.write("%s:%d \n" % ("Num-param", num_params )) 
 
-    file.write("%s:%s\n" % ("Num-param", num_params ))
-    file.close()
+
+def save_settings_dict(args, setting, num_params, folder='checkpoints'):
+    args_dict = vars(args)
+    args_dict["Num-param" ] = num_params
+    
+    with open(os.path.join(folder, setting, 'model_setting.csv'), 'w')as csv_file:  
+        writer = csv.writer(csv_file)
+        for key, value in args_dict.items():
+            writer.writerow([key, value])
+ 

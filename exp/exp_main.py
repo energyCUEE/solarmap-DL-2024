@@ -18,6 +18,7 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
+from utils.tools import save_settings_dict
 
 warnings.filterwarnings('ignore')
 
@@ -38,7 +39,7 @@ class Exp_Main(Exp_Basic):
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
-        num_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print("Model: [%s]  Number of parameters: [%d]" % (self.args.model, num_params))
 
         self.num_params = num_params
@@ -116,13 +117,15 @@ class Exp_Main(Exp_Basic):
         if not os.path.exists(path):
             os.makedirs(path)
 
+        save_settings_dict(self.args, setting, self.num_params) 
+
         time_now = time.time()
 
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
-        criterion = self._select_criterion()
+        criterion   = self._select_criterion()
 
         if self.args.use_amp:
             scaler = torch.cuda.amp.GradScaler()
@@ -228,8 +231,7 @@ class Exp_Main(Exp_Basic):
                 print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
 
         best_model_path = path + '/' + 'checkpoint.pth'
-        self.model.load_state_dict(torch.load(best_model_path))
-
+        self.model.load_state_dict(torch.load(best_model_path))   
         return self.model
 
     def test(self, setting, test=0):

@@ -38,8 +38,9 @@ np.random.seed(fix_seed)
 
 parser = argparse.ArgumentParser(description='Autoformer & Transformer family for Time Series Forecasting')
 
+
 # basic config
-parser.add_argument('--is_training', type=int, required=True, default=1, help='status')
+parser.add_argument('--mode', type=str, required=True, default="test", help='choose between {"test", "valid"}')
 parser.add_argument('--train_only', type=bool, required=False, default=False, help='perform training on full input dataset without validation and testing')
 parser.add_argument('--model_id', type=str, required=True, default='test', help='model id')
 parser.add_argument('--model', type=str, required=True, default='Autoformer',
@@ -182,7 +183,7 @@ else:
 exp = Infer_Main(args)  # set experiments 
  
 print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
-preds, trues, time_predictions,  mae, mse, test_data = exp.run(setting, test=1) 
+preds, trues, time_predictions,  mae, mse, test_data = exp.run(setting, mode=args.mode) 
 
 
 if not(args.embed == "timeF"):
@@ -200,8 +201,12 @@ stop = start + num_pred
 fig, ax = plt.subplots(4,1, figsize=(20,15), sharey=True)  
 horizon_list = [15, 30, 45, 60] 
 
+if args.mode == "test":
+    main_folder_path = "results" 
+elif  args.mode == "val": 
+    main_folder_path = "valids"
 
-folder_path = './results/%s/pred-%d.png' % (setting, pred_len)
+folder_path = os.path.join(main_folder_path, setting, 'pred-%d.png' % pred_len)
                
 for pred_index in range(pred_len):
 

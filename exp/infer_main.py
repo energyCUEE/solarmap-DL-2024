@@ -18,7 +18,8 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 import pdb
-
+import csv
+from utils.tools import save_settings_dict
 warnings.filterwarnings('ignore')
 
 class Infer_Main(Exp_Basic):
@@ -55,22 +56,32 @@ class Infer_Main(Exp_Basic):
         return criterion 
  
 
-    def run(self, setting, test=0):
-        test_data, test_loader = self._get_data(flag='test')
-        
-        if test:
-            print('loading model')
-            self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
-            num_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
-            print("Number of parameters: %d" % num_params)
+    def run(self, setting, mode="test"):
+        test_data, test_loader = self._get_data(flag=mode)
+         
+        print('loading model')
+        self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+        num_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        print("Number of parameters: %d" % num_params)
+
+        if mode == "test":
+            main_folder_path = "results" 
+        elif mode == "val": 
+            main_folder_path = "valids"
+
+        folder_path = os.path.join(main_folder_path, setting)
+        os.makedirs(main_folder_path, exist_ok=True)    
+        os.makedirs(folder_path, exist_ok=True)  
+        save_settings_dict(self.args, setting, num_params, folder=main_folder_path) 
 
         preds = []
         trues = []
         inputx = []
         timestamp_y = []
-        folder_path = './results_per_sample/' + setting + '/'
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+        if mode == "test":
+            folder_path_ = './results_per_sample/' + setting + '/'
+            if not os.path.exists(folder_path_):
+                os.makedirs(folder_path_)
 
         self.model.eval()
         pbar = tqdm(test_loader)
@@ -121,11 +132,13 @@ class Infer_Main(Exp_Basic):
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy())
                 timestamp_y.append(batch_y_mark)
-                if i % 20 == 0:
+                
+                if (mode == "test") and (i % 20 == 0) :
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
                     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
-                    visual(gt, pd, os.path.join(folder_path, str(i) + '.png'))
+                    visual(gt, pd, os.path.join(folder_path_, str(i) + '.png'))
+                
                 MSE_temp = np.mean((pred - true) ** 2)
                 pbar.set_description("MSE %f" % MSE_temp)
 
@@ -142,33 +155,40 @@ class Infer_Main(Exp_Basic):
         mae_list = []
         mse_list = []
         
-        folder_path = './results/' + setting + '/'
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-        f = open(folder_path + "result.txt", 'a')
-        f.write(setting + "  \n")
+        performance_dict = {}
 
         for seq_i in range(self.args.pred_len): 
+
             preds_rev = test_data.inverse_transform(preds[:,seq_i,:])
             trues_rev = test_data.inverse_transform(trues[:,seq_i,:])
             mae, mse, rmse, mape, mspe, rse, corr = metric(preds_rev, trues_rev)
             mae_list.append(mae)
             mse_list.append(mse)
-            f.write('mse:{}, mae:{}, rse:{}, corr:{}'.format(mse, mae, rse, corr))
-            f.write('\n')
 
-        
 
-        print('mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
-        
-        f.write('OVERALL: mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
-       
-        f.close()
-        
+            performance_dict["mse-%d" % seq_i] = mse
+            performance_dict["mae-%d" % seq_i] = mae
+            performance_dict["rse-%d" % seq_i] = rse
+            performance_dict["corr-%d" % seq_i] = corr 
 
+            print('%d:  mse: %f, mae: %f' % (seq_i, mse, mae))
+        
+        performance_dict["mse-overall" ] = sum(mse_list)/self.args.pred_len
+        performance_dict["mae-overall" ] = sum(mae_list)/self.args.pred_len
+
+        print('OVERALL:  mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
+        
+ 
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
-        np.save(folder_path + 'pred.npy', preds)
+        np.save(os.path.join(folder_path , 'pred.npy'), preds)
+        
+        performance_dict["Num-param"] = num_params
+
+        with open(os.path.join(folder_path, 'stats.csv'), 'w') as csv_file:  
+            writer = csv.writer(csv_file)
+            for key, value in performance_dict.items():
+                writer.writerow([key, value])
+
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
         return preds, trues, timestamp_y, mae_list, mse_list, test_data

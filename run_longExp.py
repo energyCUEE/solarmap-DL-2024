@@ -5,7 +5,6 @@ from exp.exp_main import Exp_Main
 import random
 import numpy as np
 import pdb
-from utils.tools import save_settings
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Autoformer & Transformer family for Time Series Forecasting')
@@ -168,9 +167,8 @@ if __name__ == '__main__':
 
             exp = Exp(args)  # set experiments
             print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting)) 
-            save_settings(args, setting, exp.num_params) 
             
-            exp.train(setting)
+            exp.train(setting) 
 
             print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
             exp.test(setting)
@@ -184,46 +182,46 @@ if __name__ == '__main__':
         ii = 0
         if args.model == "PatchTST":
             setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
-                args.model_id,
-                args.model,
-                args.data,
-                args.moving_avg,
-                args.features,
-                args.batch_size,
-                args.seq_len,
-                args.label_len,
-                args.pred_len,
-                args.patch_len,
-                args.stride,
-                args.d_model,
-                args.n_heads,
-                args.e_layers,
-                args.d_layers,
-                args.d_ff,
-                args.factor,
-                args.embed,
-                args.distil,
-                args.des, ii)
+            args.model_id,
+            args.model,
+            args.data,
+            args.moving_avg,
+            args.features,
+            args.batch_size,
+            args.seq_len,
+            args.label_len,
+            args.pred_len,
+            args.patch_len,
+            args.stride,
+            args.d_model,
+            args.n_heads,
+            args.e_layers,
+            args.d_layers,
+            args.d_ff,
+            args.factor,
+            args.embed,
+            args.distil,
+            args.des, ii)
         else:
-        
-            setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
-                args.model,
-                args.data,
-                args.moving_avg,
-                args.features,
-                args.batch_size,
-                args.seq_len,
-                args.label_len,
-                args.pred_len,
-                args.d_model,
-                args.n_heads,
-                args.e_layers,
-                args.d_layers,
-                args.d_ff,
-                args.factor,
-                args.embed,
-                args.distil,
-                args.des, ii) 
+            setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
+            args.model_id,
+            args.model,
+            args.data,
+            args.moving_avg,
+            args.features,
+            args.batch_size,
+            args.seq_len,
+            args.label_len,
+            args.pred_len,
+            args.d_model,
+            args.n_heads,
+            args.e_layers,
+            args.d_layers,
+            args.d_ff,
+            args.factor,
+            args.embed,
+            args.distil,
+            args.des, ii)
 
 
         exp = Exp(args)  # set experiments
