@@ -38,6 +38,11 @@ class Exp_Main(Exp_Basic):
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
+        num_params = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+        print("Model: [%s]  Number of parameters: [%d]" % (self.args.model, num_params))
+
+        self.num_params = num_params
+
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
         return model
@@ -237,7 +242,7 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
         inputx = []
-        folder_path = './test_results/' + setting + '/'
+        folder_path = './run_testing/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 

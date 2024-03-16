@@ -15,7 +15,8 @@ target=I
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
-num_features=9
+num_features=8
+
 model_name=DLinear  
 python -u plot_longExp.py \
   --is_training 0 \
@@ -32,4 +33,4 @@ python -u plot_longExp.py \
   --pred_len $pred_len \
   --enc_in $num_features \
   --des 'Exp' \
-  --itr 1 --batch_size $batch_size  --learning_rate 0.005 --individual >'logs/LongForecasting/'$model_name"_"$feature_type"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
+  --itr 1 --batch_size $batch_size  --learning_rate 0.005 --individual >'logs/LongForecasting/'$model_name"_"$feature_type"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'_infer.log' 

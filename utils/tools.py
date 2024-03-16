@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 import time
+import os
 
 plt.switch_backend('agg')
 
@@ -114,3 +115,14 @@ def test_params_flop(model,x_shape):
         # print('Params:' + params)
         print('{:<30}  {:<8}'.format('Computational complexity: ', macs))
         print('{:<30}  {:<8}'.format('Number of parameters: ', params))
+
+
+def save_settings(args, setting, num_params):
+    
+    with open(os.path.join('./checkpoints/' + setting, 'model_setting.txt'), 'w') as file :
+        args_dict = vars(args)
+        for key,value in args_dict.items():
+            file.write("%s:%s\n" % (key,value))
+
+    file.write("%s:%s\n" % ("Num-param", num_params ))
+    file.close()

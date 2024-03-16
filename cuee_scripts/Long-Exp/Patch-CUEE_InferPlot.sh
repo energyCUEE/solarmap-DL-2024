@@ -20,9 +20,9 @@ patch_len=16
 stride=8
 
 d_model=128
-
-python -u run_longExp.py \
-    --is_training 1 \
+ 
+python -u plot_longExp.py \
+    --is_training 0 \
     --root_path ./dataset/CUEE/ \
     --data_path updated_measurement_Iclr_new.csv \
     --model_id CUEEData_$seq_len'_'$pred_len \
@@ -43,10 +43,10 @@ python -u run_longExp.py \
     --fc_dropout 0.3\
     --head_dropout 0\
     --patch_len $patch_len\
-    --stride $stride \
+    --stride $stride\
     --des 'Exp' \
-    --train_epochs 20\
-    --patience 3\
+    --train_epochs 100\
+    --patience 100\
     --lradj 'TST'\
     --pct_start 0.3\
-    --itr 1 --batch_size $batch_size --learning_rate 0.0001 >'logs/LongForecasting/'$model_name"_"$feature_type"_d"$d_model"_"$patch_len"-"$stride"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
+    --itr 1 --batch_size $batch_size --learning_rate 0.0001 >'logs/LongForecasting/'$model_name"_"$feature_type"_d"$d_model"_"$patch_len"-"$stride"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'_infer.log' 

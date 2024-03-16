@@ -15,10 +15,9 @@ target=I
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
-num_features=9
+num_features=8
 
-for model_name in DLinear Linear NLinear
-do 
+model_name=DLinear
 python -u run_longExp.py \
   --is_training 1 \
   --root_path ./dataset/CUEE/ \
@@ -36,5 +35,4 @@ python -u run_longExp.py \
   --des 'Exp' \
   --itr 1 --batch_size $batch_size  --learning_rate 0.005 --individual >'logs/LongForecasting/'$model_name"_"$feature_type"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
   
-done
  

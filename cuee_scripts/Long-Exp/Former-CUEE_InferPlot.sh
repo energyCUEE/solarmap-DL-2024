@@ -37,14 +37,14 @@ python -u plot_longExp.py \
     --pred_len $pred_len \
     --embed_type 4 \
     --e_layers 2 \
+    --d_model $d_model \
     --d_layers 1 \
     --factor 3 \
     --enc_in $num_features \
     --dec_in $num_features \
     --c_out  $num_features \
     --des 'Exp' \
-    --batch_size $batch_size --itr 1 >'logs/LongForecasting/'$model_name"_"$feature_type"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'.log' 
-
+    --batch_size $batch_size --itr 1 >'logs/LongForecasting/'$model_name"_"$feature_type"_d"$d_model"_"$target"_mv"$moving_avg"_CUEE_"$seq_len'_'$label_len'_'$pred_len'_'$batch_size'_infer.log' 
 
 
 # model_name=Transformer

@@ -1,6 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear
+from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST, RLSTM
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric
 
@@ -33,6 +33,8 @@ class Infer_Main(Exp_Basic):
             'DLinear': DLinear,
             'NLinear': NLinear,
             'Linear': Linear,
+            'PatchTST': PatchTST,
+            'RLSTM': RLSTM
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -86,7 +88,7 @@ class Infer_Main(Exp_Basic):
                 # encoder - decoder
                 if self.args.use_amp:
                     with torch.cuda.amp.autocast():
-                        if 'Linear' in self.args.model:
+                        if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
                             outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
@@ -94,7 +96,7 @@ class Infer_Main(Exp_Basic):
                             else:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
-                    if 'Linear' in self.args.model:
+                    if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
                             outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
