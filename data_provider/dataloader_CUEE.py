@@ -87,8 +87,8 @@ class DatasetCUEE(data.Dataset):
             raw_data['month']        = [ date.month for date in raw_data['Datetime'] ]
             raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
 
-            self.stations_list      = ["ISL052"] 
-            raw_data["site_name"]   = "ISL052"
+            self.stations_list      = ["CUEE"] 
+            raw_data["site_name"]   = "CUEE"
 
         else:
             #'updated_measurement_Iclr_new.csv'  
