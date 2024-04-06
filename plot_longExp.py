@@ -198,16 +198,18 @@ num_pred = 500
 start = random.randint(0, preds.shape[0])
 stop = start + num_pred 
 
-fig, ax = plt.subplots(4,1, figsize=(20,15), sharey=True)  
-horizon_list = [15, 30, 45, 60] 
+fig, ax = plt.subplots(args.pred_len,1, figsize=(20,2*15), sharey=True)  
+horizon_list = range(0,16) #[15, 30, 45, 60] 
 
 if args.mode == "test":
     main_folder_path = "results" 
 elif  args.mode == "val": 
     main_folder_path = "valids"
 
-folder_path = os.path.join(main_folder_path, setting, 'pred-%d.png' % pred_len)
-               
+folder_path = os.path.join(main_folder_path, setting, 'pred-%d.png' % pred_len) 
+
+print("\n ============ %s ============  \n" % folder_path)
+
 for pred_index in range(pred_len):
 
     if not(args.embed == "timeF"):

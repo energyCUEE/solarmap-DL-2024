@@ -75,23 +75,37 @@ class DatasetCUEE(data.Dataset):
         
         raw_data = []
 
-        read_data     = pd.read_csv(os.path.join(self.root_path, self.data_path) ) #'updated_measurement_Iclr_new.csv' 
+        read_data     = pd.read_csv(os.path.join(self.root_path, self.data_path) ) 
 
-        # If you want more feature .... you may add them here ....
-        raw_data      = read_data[['Datetime', "site_name", "Iclr", "latt", "long", "I"]].copy() 
+        if "EE-Station" in self.data_path: 
 
-        raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
-        raw_data["hour"]         = [ date.hour for date in raw_data['Datetime'] ]
-        raw_data['day']          = [ date.day for date in raw_data['Datetime'] ]
-        raw_data['month']        = [ date.month for date in raw_data['Datetime'] ]
-        raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
+            raw_data      = read_data[['Datetime', "I"]].copy() 
 
-        # Shift Iclr to one step in feature and use it as a feature...
-        new_df = pd.DataFrame(raw_data.shift(-self.seq_len).values, columns=raw_data.columns) 
-        new_df = new_df.drop(new_df.index[-1])  
-        new_df.rename(columns={'Iclr':'Iclr_future'}, inplace=True) 
-        new_df = new_df['Iclr_future']  
-        raw_data = pd.concat([raw_data, new_df], axis=1)
+            raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
+            raw_data["hour"]         = [ date.hour for date in raw_data['Datetime'] ]
+            raw_data['day']          = [ date.day for date in raw_data['Datetime'] ]
+            raw_data['month']        = [ date.month for date in raw_data['Datetime'] ]
+            raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
+
+            self.stations_list      = ["ISL052"] 
+            raw_data["site_name"]   = "ISL052"
+
+        else:
+            #'updated_measurement_Iclr_new.csv'  
+            raw_data      = read_data[['Datetime', "site_name", "Iclr", "latt", "long", "I"]].copy() 
+
+            raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
+            raw_data["hour"]         = [ date.hour for date in raw_data['Datetime'] ]
+            raw_data['day']          = [ date.day for date in raw_data['Datetime'] ]
+            raw_data['month']        = [ date.month for date in raw_data['Datetime'] ]
+            raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
+
+            # Shift Iclr to one step in feature and use it as a feature...
+            new_df = pd.DataFrame(raw_data.shift(-self.seq_len).values, columns=raw_data.columns) 
+            new_df = new_df.drop(new_df.index[-1])  
+            new_df.rename(columns={'Iclr':'Iclr_future'}, inplace=True) 
+            new_df = new_df['Iclr_future']  
+            raw_data = pd.concat([raw_data, new_df], axis=1)
 
         df_raw_time = choose_daytimehours(raw_data, start=1, end=9) 
         
@@ -101,7 +115,7 @@ class DatasetCUEE(data.Dataset):
 
         for station_num in self.stations_list:
             df_raw     = choose_stations(df_raw_time, station_num_list=[station_num])  
-            
+             
             cols = list(df_raw.columns)
             if self.features == 'S':
                 cols.remove(self.target)
@@ -131,15 +145,22 @@ class DatasetCUEE(data.Dataset):
                 df_data    = df_raw[[self.target]] 
 
             if self.scale:
-                train_data = df_data[border1s[0]:border2s[0]]
-                self.scaler_x.fit(train_data[cols_data[:-1]].values) 
-                data_x = self.scaler_x.transform(df_data[cols_data[:-1]].values)
+                train_data = df_data[border1s[0]:border2s[0]] 
 
-                self.scaler_y.fit(train_data[cols_data[-1]].values.reshape(-1,1)) 
-                data_y = self.scaler_y.transform(df_data[cols_data[-1]].values.reshape(-1,1))
+                if self.features == 'M' or self.features == 'MS':
  
-                data = np.concatenate([data_x,data_y], axis=1)
+                    self.scaler_x.fit(train_data[cols_data[:-1]].values) 
+                    data_x = self.scaler_x.transform(df_data[cols_data[:-1]].values)
+    
+                    self.scaler_y.fit(train_data[cols_data[-1]].values.reshape(-1,1)) 
+                    data_y = self.scaler_y.transform(df_data[cols_data[-1]].values.reshape(-1,1)) 
+                    data = np.concatenate([data_x, data_y], axis=1)
 
+                elif self.features == 'S':
+
+                    self.scaler_y.fit(train_data.values) 
+                    data = self.scaler_y.transform(df_data.values)  
+                    
             else:
                 data = df_data.values
 
@@ -172,7 +193,7 @@ class DatasetCUEE(data.Dataset):
  
         self.data_x = np.concatenate(data_x_list)
         self.data_y = np.concatenate(data_y_list)  
-        self.data_stamp = np.concatenate(data_stamp_list)        
+        self.data_stamp = np.concatenate(data_stamp_list)  
 
     def __getitem__(self, index):
 
@@ -180,9 +201,10 @@ class DatasetCUEE(data.Dataset):
         s_end   = s_begin + self.seq_len
         r_begin = s_end   - self.label_len
         r_end   = r_begin + self.label_len + self.pred_len
-
+ 
         seq_x = self.data_x[s_begin:s_end]
         seq_y = self.data_y[r_begin:r_end]
+
 
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
