@@ -1,19 +1,21 @@
 import os
 import csv
 import pdb
-main_folder_path = "valids"
-model_name = "RLSTM"
-seq_length = 74
-pred_length = 15
-
+main_folder_path = "checkpoints"
+model_name = "Informer"
+seq_length = 37
+pred_length = 4
+mode = "MS"
+batch_size = 64
+moving_average  = 4
 folder_list = [
-    "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm8_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0"   % (seq_length, pred_length, model_name, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm16_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm32_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name, seq_length, pred_length), 
-    "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm64_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm128_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm256_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm512_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
+    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"   % (seq_length, pred_length, model_name, moving_average, mode, batch_size, seq_length, pred_length),
+    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm16_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name, moving_average, mode, batch_size, seq_length, pred_length),
+    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm32_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name, moving_average, mode, batch_size, seq_length, pred_length), 
+    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm64_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name,  moving_average, mode, batch_size, seq_length, pred_length),
+    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm128_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, moving_average,  mode,batch_size,  seq_length, pred_length),
+    # "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm256_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
+    # "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm512_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
 ]
 
 # folder_list = [

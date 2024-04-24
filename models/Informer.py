@@ -6,7 +6,7 @@ from layers.Transformer_EncDec import Decoder, DecoderLayer, Encoder, EncoderLay
 from layers.SelfAttention_Family import FullAttention, ProbAttention, AttentionLayer
 from layers.Embed import DataEmbedding,DataEmbedding_wo_pos,DataEmbedding_wo_temp,DataEmbedding_wo_pos_temp
 import numpy as np
-
+import pdb
 
 class Model(nn.Module):
     """
@@ -16,6 +16,8 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.pred_len = configs.pred_len
         self.output_attention = configs.output_attention
+
+        self.d_target = configs.d_target
 
         # Embedding
         if configs.embed_type == 0:
@@ -86,15 +88,24 @@ class Model(nn.Module):
             projection=nn.Linear(configs.d_model, configs.c_out, bias=True)
         )
 
+        if configs.d_target is not None:
+            self.final = nn.Linear(configs.enc_in, configs.d_target)
+                  
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
                 enc_self_mask=None, dec_self_mask=None, dec_enc_mask=None):
-
+        
+        # x_dec.shape = 16 x 1 x 8       = B x Pred_Length X Feature
+        # x_mark_dec.shape = 16 x 1 x 4  = B x Pred_Length X 4 
         enc_out = self.enc_embedding(x_enc, x_mark_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
-
-        dec_out = self.dec_embedding(x_dec, x_mark_dec)
+ 
+        
+        dec_out = self.dec_embedding(x_dec, x_mark_dec) 
         dec_out = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)
 
+        if self.d_target is not None: 
+            dec_out = self.final(dec_out)
+ 
         if self.output_attention:
             return dec_out[:, -self.pred_len:, :], attns
         else:

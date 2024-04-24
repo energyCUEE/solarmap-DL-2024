@@ -9,7 +9,7 @@ import math
 from math import sqrt
 from utils.masking import TriangularCausalMask, ProbMask
 import os
-
+import pdb
 
 class FullAttention(nn.Module):
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
@@ -53,23 +53,42 @@ class ProbAttention(nn.Module):
     def _prob_QK(self, Q, K, sample_k, n_top):  # n_top: c*ln(L_q)
         # Q [B, H, L, D]
         B, H, L_K, E = K.shape
-        _, _, L_Q, _ = Q.shape
-
+        _, _, L_Q, _ = Q.shape 
+ 
         # calculate the sampled Q_K
-        K_expand = K.unsqueeze(-3).expand(B, H, L_Q, L_K, E)
-        index_sample = torch.randint(L_K, (L_Q, sample_k))  # real U = U_part(factor*ln(L_k))*L_q
-        K_sample = K_expand[:, :, torch.arange(L_Q).unsqueeze(1), index_sample, :]
-        Q_K_sample = torch.matmul(Q.unsqueeze(-2), K_sample.transpose(-2, -1)).squeeze()
+        K_expand     = K.unsqueeze(-3).expand(B, H, L_Q, L_K, E)
+        index_sample = torch.randint(L_K, (L_Q, sample_k))  # real U = U_part(factor*ln(L_k))*L_q 
 
-        # find the Top_k query with sparisty measurement
-        M = Q_K_sample.max(-1)[0] - torch.div(Q_K_sample.sum(-1), L_K)
-        M_top = M.topk(n_top, sorted=False)[1]
+        if L_Q > 1:
 
-        # use the reduced Q to calculate Q_K
-        Q_reduce = Q[torch.arange(B)[:, None, None],
-                   torch.arange(H)[None, :, None],
-                   M_top, :]  # factor*ln(L_q)
-        Q_K = torch.matmul(Q_reduce, K.transpose(-2, -1))  # factor*ln(L_q)*L_k
+            K_sample     = K_expand[:, :, torch.arange(L_Q).unsqueeze(1), index_sample, :]
+            Q_K_sample   = torch.matmul(Q.unsqueeze(-2), K_sample.transpose(-2, -1)).squeeze()
+ 
+            # find the Top_k query with sparisty measurement  
+            M = Q_K_sample.max(-1)[0] - torch.div(Q_K_sample.sum(-1), L_K)
+             
+            # 16x8x37
+            M_top = M.topk(n_top, sorted=False)[1] 
+            # 16x8x12
+
+            # use the reduced Q to calculate Q_K
+            Q_reduce = Q[torch.arange(B)[:, None, None],
+                    torch.arange(H)[None, :, None],
+                    M_top, :]  # factor*ln(L_q)
+             
+            # Q_reduce 16x8x12x4 x 16x8x4x37
+            Q_K = torch.matmul(Q_reduce, K.transpose(-2, -1))  # factor*ln(L_q)*L_k
+            # 16x8x12x37 
+
+        else:
+
+            K_sample     = K_expand
+            Q_K_sample   = torch.matmul(Q.unsqueeze(-2), K_sample.transpose(-2, -1)).squeeze(-1) 
+
+            # find the Top_k query with sparisty measurement  
+            M = Q_K_sample.max(-1)[0] - torch.div(Q_K_sample.sum(-1), L_K) 
+            M_top = M.topk(1, sorted=False)[1] 
+            Q_K = Q_K_sample  # factor*ln(L_q)*L_k 
 
         return Q_K, M_top
 
@@ -92,10 +111,13 @@ class ProbAttention(nn.Module):
             scores.masked_fill_(attn_mask.mask, -np.inf)
 
         attn = torch.softmax(scores, dim=-1)  # nn.Softmax(dim=-1)(scores)
+        # attn 16x8x12x37  V 16x8x37x4
+        if (attn.dim() == 5) and (attn.shape[-2] == 1):
+            attn = attn.squeeze(-2)  
+            context_in[torch.arange(B)[:, None, None],  torch.arange(H)[None, :, None], 0, :] = torch.matmul(attn, V).type_as(context_in)
+        else:  
+            context_in[torch.arange(B)[:, None, None],  torch.arange(H)[None, :, None], index, :] = torch.matmul(attn, V).type_as(context_in)
 
-        context_in[torch.arange(B)[:, None, None],
-        torch.arange(H)[None, :, None],
-        index, :] = torch.matmul(attn, V).type_as(context_in)
         if self.output_attention:
             attns = (torch.ones([B, H, L_V, L_V]) / L_V).type_as(attn).to(attn.device)
             attns[torch.arange(B)[:, None, None], torch.arange(H)[None, :, None], index, :] = attn

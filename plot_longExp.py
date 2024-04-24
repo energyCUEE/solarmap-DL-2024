@@ -61,6 +61,7 @@ parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='l
 parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
 parser.add_argument('--label_len', type=int, default=48, help='start token length')
 parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
+parser.add_argument('--d_target',  type=int, default=1, help='feature dimension of the target prediction')
 
 # DLinear
 parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
@@ -186,6 +187,7 @@ print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
 preds, trues, time_predictions,  mae, mse, test_data = exp.run(setting, mode=args.mode) 
 
 
+
 if not(args.embed == "timeF"):
     time_predictions = time2string(time_predictions, args.pred_len, args.batch_size)
     time_predictions = np.concatenate(time_predictions, axis=0)  
@@ -193,12 +195,9 @@ if not(args.embed == "timeF"):
 refvec_plot = [] 
 seq_len = args.seq_len 
 pred_len = args.pred_len 
+ 
 
-num_pred = 500 
-start = random.randint(0, preds.shape[0])
-stop = start + num_pred 
-
-fig, ax = plt.subplots(args.pred_len,1, figsize=(20,2*15), sharey=True)  
+fig, ax = plt.subplots(args.pred_len,1, figsize=(20,2*15), sharey=True)   
 horizon_list = range(0,16) #[15, 30, 45, 60] 
 
 if args.mode == "test":
@@ -209,29 +208,67 @@ elif  args.mode == "val":
 folder_path = os.path.join(main_folder_path, setting, 'pred-%d.png' % pred_len) 
 
 print("\n ============ %s ============  \n" % folder_path)
+if args.pred_len == 1:
 
-for pred_index in range(pred_len):
+    num_pred = 100 
+    start = random.randint(0, preds.shape[0])
+    stop = start + num_pred 
 
     if not(args.embed == "timeF"):
-        time_predictions_ = time_predictions[start:stop,pred_index].reshape([-1])
-    groundtruth_      = trues[start:stop,pred_index].reshape([-1])
-    predictions_      = preds[start:stop,pred_index].reshape([-1]) 
- 
+        time_predictions_ = time_predictions[start:stop,:].reshape([-1])
+
+    groundtruth_      = trues[start:stop,0].reshape([-1])
+    predictions_      = preds[start:stop,0].reshape([-1])  
+
     time_x = np.arange(len(groundtruth_))  
     time_x_tick = np.arange(0, len(groundtruth_), 36)
 
-    ax[pred_index].plot(time_x, groundtruth_, label='actual', color="black")
-    ax[pred_index].plot(time_x, predictions_, label='LSTM', color="red")
-    ax[pred_index].set_xticks(time_x_tick)
-    if not(args.embed == "timeF"):
-        ax[pred_index].set_xticklabels(time_predictions_[time_x_tick] , rotation=45, ha='right') 
-    else:
-        ax[pred_index].set_xticklabels(time_x_tick/36, rotation=45, ha='right') 
-    ax[pred_index].set_title("MAE %0.2f @ Horrizon %d mins ahead" % (mae[pred_index], horizon_list[pred_index]))
-    ax[pred_index].legend()  
-    ax[pred_index].grid(True)
-    ax[pred_index].set_ylabel("$Watt/m^2$")
+    ax.plot(time_x, groundtruth_, label='actual', color="black")
+    ax.plot(time_x, predictions_, label=args.model, color="red")
+    ax.set_xticks(time_x_tick)
 
-plt.tight_layout()   
-plt.savefig(folder_path)
-            
+    if not(args.embed == "timeF"):
+        ax.set_xticklabels(time_predictions_[time_x_tick] , rotation=45, ha='right') 
+    else:
+        ax.set_xticklabels(time_x_tick/36, rotation=45, ha='right') 
+    ax.set_title("MAE %0.2f @ Horrizon %d mins ahead" % (mae[0], horizon_list[0]))
+    ax.legend()  
+    ax.grid(True)
+    ax.set_ylabel("$Watt/m^2$")
+
+    plt.tight_layout()   
+    plt.savefig(folder_path)
+
+else:
+    num_pred = 500 
+    
+    start =  random.randint(0, preds.shape[0])
+    stop = start + num_pred 
+
+    for pred_index in range(pred_len):
+
+        if not(args.embed == "timeF"):
+            time_predictions_ = time_predictions[start:stop,pred_index].reshape([-1])
+ 
+        groundtruth_      = trues[start:stop,pred_index]  
+        predictions_      = preds[start:stop,pred_index]  
+    
+        time_x = np.arange(len(groundtruth_))  
+        time_x_tick = np.arange(0, len(groundtruth_), 36)
+
+        ax[pred_index].plot(time_x, groundtruth_, label='actual', color="black")
+        ax[pred_index].plot(time_x, predictions_, label='LSTM', color="red")
+        ax[pred_index].set_xticks(time_x_tick)
+        if not(args.embed == "timeF"):
+            ax[pred_index].set_xticklabels(time_predictions_[time_x_tick] , rotation=45, ha='right') 
+        else:
+            ax[pred_index].set_xticklabels(time_x_tick/36, rotation=45, ha='right') 
+        ax[pred_index].set_title("MAE %0.2f @ Horrizon %d mins ahead" % (mae[pred_index], horizon_list[pred_index]))
+        ax[pred_index].legend()  
+        ax[pred_index].grid(True)
+        ax[pred_index].set_ylabel("$Watt/m^2$")
+ 
+
+    plt.tight_layout()   
+    plt.savefig(folder_path)
+ 

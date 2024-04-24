@@ -1,6 +1,7 @@
 from data_provider.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, Dataset_Pred
-from data_provider.dataloader_CUEE import  DatasetCUEE
+from data_provider.dataloader_regression_CUEE import  DatasetCUEE 
 from torch.utils.data import DataLoader
+import pdb
 
 data_dict = {
     'ETTh1': Dataset_ETT_hour,
@@ -9,6 +10,7 @@ data_dict = {
     'ETTm2': Dataset_ETT_minute,
     'custom': Dataset_Custom,
     'CUEE':  DatasetCUEE,
+    'PMASCUEE':  DatasetCUEE,
 }
 
 
@@ -17,17 +19,19 @@ def data_provider(args, flag):
     timeenc = 0 if args.embed != 'timeF' else 1
     train_only = args.train_only
 
-    if flag == 'test':
+    if (flag == 'test') or (flag == 'val'):
         shuffle_flag = False
         drop_last = False
         batch_size = args.batch_size
         freq = args.freq
+
     elif flag == 'pred' and not(args.data == 'CUEE'):
         shuffle_flag = False
         drop_last = False
         batch_size = 1
         freq = args.freq
         Data = Dataset_Pred
+
     elif flag == 'pred' and (args.data == 'CUEE'):
         shuffle_flag = False
         drop_last = False
@@ -40,17 +44,36 @@ def data_provider(args, flag):
         batch_size = args.batch_size
         freq = args.freq
 
-    data_set = Data(
-        root_path=args.root_path,
-        data_path=args.data_path,
-        flag=flag,
-        size=[args.seq_len, args.label_len, args.pred_len],
-        features=args.features,
-        target=args.target,
-        timeenc=timeenc,
-        freq=freq,
-        train_only=train_only
-    )
+
+    if args.data == "PMASCUEE":
+        
+        data_set = Data(
+            root_path=args.root_path,
+            test_data_path=args.test_data_path,
+            train_data_path=args.train_data_path, 
+            flag=flag,
+            size=[args.seq_len, args.label_len, args.pred_len],
+            features=args.features,
+            target=args.target,
+            timeenc=timeenc,
+            freq=freq,
+            train_only=train_only
+        ) 
+
+    else:
+
+        data_set = Data(
+            root_path=args.root_path, 
+            data_path=args.data_path,
+            flag=flag,
+            size=[args.seq_len, args.label_len, args.pred_len],
+            features=args.features,
+            target=args.target,
+            timeenc=timeenc,
+            freq=freq,
+            train_only=train_only
+        ) 
+    
     print(flag, len(data_set))
     data_loader = DataLoader(
         data_set,

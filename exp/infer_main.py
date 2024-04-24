@@ -84,49 +84,46 @@ class Infer_Main(Exp_Basic):
                 os.makedirs(folder_path_)
 
         self.model.eval()
+        MSE_temp_list = []
         pbar = tqdm(test_loader)
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(pbar):
+            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(pbar):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
+                batch_v = batch_v.float().to(self.device)
 
                 batch_x_mark = batch_x_mark.float().to(self.device)
                 batch_y_mark = batch_y_mark.float().to(self.device)
+                batch_v_mark = batch_v_mark.float().to(self.device)
+
+                batch_size, pred_len, pred_feature = batch_y.shape
 
                 # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+                # dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
+                # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
                 # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
-                        if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
-                            outputs = self.model(batch_x)
-                        else:
-                            if self.args.output_attention:
-                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                            else:
-                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
+                        outputs = self.model(batch_x)
                 else:
-                    if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
-                            outputs = self.model(batch_x)
-                    else:
-                        if self.args.output_attention:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                    if self.args.output_attention:
+                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0]
 
-                        else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                    else:
+                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)
+
 
                 f_dim = -1 if self.args.features == 'MS' else 0
                 # print(outputs.shape,batch_y.shape)
                  
-                outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device) 
+                outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
+                batch_y = batch_y.to(self.device)
+                 
                 
                 outputs = outputs.detach().cpu().numpy()
                 batch_y = batch_y.detach().cpu().numpy()
 
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
-                true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
+                true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze() 
 
                 preds.append(pred)
                 trues.append(true)
@@ -140,12 +137,14 @@ class Infer_Main(Exp_Basic):
                     visual(gt, pd, os.path.join(folder_path_, str(i) + '.png'))
                 
                 MSE_temp = np.mean((pred - true) ** 2)
-                pbar.set_description("MSE %f" % MSE_temp)
+                MSE_temp_list.append(MSE_temp)
+                pbar.set_description("MSE %f" % (sum(MSE_temp_list)/len(MSE_temp_list)) )
 
         if self.args.test_flop:
             test_params_flop((batch_x.shape[1],batch_x.shape[2]))
             exit()
-            
+
+ 
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
         inputx = np.concatenate(inputx, axis=0)
@@ -157,13 +156,25 @@ class Infer_Main(Exp_Basic):
         
         performance_dict = {}
 
-        for seq_i in range(self.args.pred_len): 
+        preds_rev_list = []
+        trues_rev_list = []
+        
+        mae_scaled_list = []
+        mse_scaled_list = []
 
-            preds_rev = test_data.inverse_transform(preds[:,seq_i,:])
-            trues_rev = test_data.inverse_transform(trues[:,seq_i,:])
+        for seq_i in range(self.args.pred_len): 
+ 
+            preds_rev = test_data.inverse_transform_y(preds[:,seq_i,:])
+            trues_rev = test_data.inverse_transform_y(trues[:,seq_i,:]) 
+
+            preds_rev_list.append(preds_rev)
+            trues_rev_list.append(trues_rev)
+
             mae, mse, rmse, mape, mspe, rse, corr = metric(preds_rev, trues_rev)
             mae_list.append(mae)
             mse_list.append(mse)
+
+            mae_scaled, mse_scaled, _, _, _, _, _ = metric(preds[:,seq_i,:], trues[:,seq_i,:])
 
 
             performance_dict["mse-%d" % seq_i] = mse
@@ -171,12 +182,19 @@ class Infer_Main(Exp_Basic):
             performance_dict["rse-%d" % seq_i] = rse
             performance_dict["corr-%d" % seq_i] = corr 
 
-            print('%d:  mse: %f, mae: %f' % (seq_i, mse, mae))
+            print('%d:  mse: %f, mae: %f | mse-s: %f, mae-s: %f' % (seq_i, mse, mae, mse_scaled, mae_scaled))
+
+            mae_scaled_list.append(mae_scaled)
+            mse_scaled_list.append(mse_scaled)
         
         performance_dict["mse-overall" ] = sum(mse_list)/self.args.pred_len
         performance_dict["mae-overall" ] = sum(mae_list)/self.args.pred_len
 
-        print('OVERALL:  mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
+        performance_dict["mse-s-overall" ] = sum(mse_scaled_list)/self.args.pred_len
+        performance_dict["mae-s-overall" ] = sum(mae_scaled_list)/self.args.pred_len
+
+        print('OVERALL:    mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
+        print('OVERALL-S:  mse:{}, mae:{}'.format( sum(mse_scaled_list)/self.args.pred_len, sum(mae_scaled_list)/self.args.pred_len ))
         
  
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
@@ -191,5 +209,10 @@ class Infer_Main(Exp_Basic):
 
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
-        return preds, trues, timestamp_y, mae_list, mse_list, test_data
+
+        preds_rev_concat = np.concatenate(preds_rev_list, axis=1)
+        trues_rev_concat = np.concatenate(trues_rev_list, axis=1) 
+ 
+
+        return preds_rev_concat, trues_rev_concat, timestamp_y, mae_list, mse_list, test_data
 

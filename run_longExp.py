@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('--seq_len',   type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=48, help='start token length')
     parser.add_argument('--pred_len',  type=int, default=96, help='prediction sequence length')
-
+    parser.add_argument('--d_target',  type=int, default=1, help='feature dimension of the target prediction')
 
     # DLinear
     parser.add_argument('--individual', action='store_true', default=False, help='DLinear: a linear layer for each variate(channel) individually')
@@ -79,8 +79,8 @@ if __name__ == '__main__':
     parser.add_argument('--itr',           type=int, default=2, help='experiments times')
     parser.add_argument('--train_epochs',  type=int, default=10, help='train epochs')
     parser.add_argument('--batch_size',    type=int, default=128, help='batch size of train input data')
-    parser.add_argument('--patience',      type=int, default=100, help='early stopping patience')
-    parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
+    parser.add_argument('--patience',      type=int, default=3, help='early stopping patience')
+    parser.add_argument('--learning_rate', type=float, default=0.001, help='optimizer learning rate')
     parser.add_argument('--des',        type=str, default='test', help='exp description')
     parser.add_argument('--loss',       type=str, default='mse', help='loss function')
     parser.add_argument('--lradj',      type=str, default='type3', help='adjust learning rate')
@@ -101,8 +101,7 @@ if __name__ == '__main__':
     random.seed(fix_seed)
     torch.manual_seed(fix_seed)
     np.random.seed(fix_seed)
- 
-    
+     
     args.use_gpu = True if torch.cuda.is_available() and args.use_gpu else False
 
     if args.use_gpu and args.use_multi_gpu:
