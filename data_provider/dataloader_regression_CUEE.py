@@ -86,34 +86,27 @@ class DatasetCUEE(data.Dataset):
         
         raw_data = []
  
-        read_train_data     = pd.read_csv(os.path.join(self.root_path, self.train_data_path) ) 
-        read_data           = pd.read_csv(os.path.join(self.root_path, self.data_path) ) 
+        train_data     = pd.read_csv(os.path.join(self.root_path, self.train_data_path) ) 
+        read_data      = pd.read_csv(os.path.join(self.root_path, self.data_path) ) 
 
-        if "EE-Station" in self.data_path: 
+        raw_train_data = train_data[['Datetime', 'site_name', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1', 'day', 'month', 'hour', 'minute', 'temperature', 'I_nwp']].copy() 
+        raw_train_data['Datetime']     = pd.to_datetime(raw_train_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
+        raw_train_data["hour"]         = [ date.hour   for date in raw_train_data['Datetime'] ]
+        raw_train_data['day']          = [ date.day    for date in raw_train_data['Datetime'] ]
+        raw_train_data['month']        = [ date.month  for date in raw_train_data['Datetime'] ]
+        raw_train_data['minute']       = [ date.minute for date in raw_train_data['Datetime'] ]
 
-            raw_data      = read_data[['Datetime', "I"]].copy() 
-
-            raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
-            raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
-            raw_data['day']          = [ date.day    for date in raw_data['Datetime'] ]
-            raw_data['month']        = [ date.month  for date in raw_data['Datetime'] ]
-            raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
-
-            self.stations_list      = ["CUEE"] 
-            raw_data["site_name"]   =  "CUEE"
-
-        else:
-            #'updated_measurement_Iclr_new.csv'  
-            raw_data      = read_data[['Datetime', "site_name", "Iclr", "latt", "long", "I"]].copy() 
-
-            raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
-            raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
-            raw_data['day']          = [ date.day    for date in raw_data['Datetime'] ]
-            raw_data['month']        = [ date.month  for date in raw_data['Datetime'] ]
-            raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
+        #'updated_measurement_Iclr_new.csv'   
+        raw_data       =  read_data[['Datetime', 'site_name', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1', 'day', 'month', 'hour', 'minute', 'temperature', 'I_nwp']].copy()  
+        raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
+        raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
+        raw_data['day']          = [ date.day    for date in raw_data['Datetime'] ]
+        raw_data['month']        = [ date.month  for date in raw_data['Datetime'] ]
+        raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
 
             # Shift Iclr to one step in feature and use it as a feature... 
-            
+
+        df_raw_train  = choose_daytimehours(raw_train_data, start=1, end=9)   
         df_raw_time = choose_daytimehours(raw_data, start=1, end=9) 
         
         data_x_list = []
@@ -122,40 +115,22 @@ class DatasetCUEE(data.Dataset):
         data_stamp_list = []
 
         for station_num in self.stations_list: 
-             
+
+            df_train_raw     = choose_stations(df_raw_train, station_num_list=[station_num])   
             df_raw     = choose_stations(df_raw_time, station_num_list=[station_num])  
   
-            cols = list(df_raw.columns)
-            if self.features == 'S':
-                cols.remove(self.target)
-            cols.remove('Datetime')
-            cols.remove('hour')
- 
-
-            #print("[%s] Total %d Train %d Test %d" %( station_num, len(df_raw),   int(len(df_raw) * 0.70) , int(len(df_raw) * 0.2* self.sampling_rate) ))
-            num_train = int(len(df_raw) * 0.7) # if not self.train_only else 1
-            num_test  = int(len(df_raw) * 0.15)
-             
-            num_vali  = len(df_raw) - num_train - num_test
-             
-
-            border1s  = [0, num_train - self.seq_len, len(df_raw) - num_test - self.seq_len]
-            border2s  = [num_train, num_train + num_vali, len(df_raw)]
-            
-            border1   = border1s[self.set_type]
-            border2   = border2s[self.set_type]  
  
             # The last attribute is also a target attribute ... 
-            df_raw       = df_raw[['Datetime', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute', 'I']]
+            #df_raw       = df_raw[['Datetime', 'site_name', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1', 'day', 'month', 'hour', 'minute', 'temperature', 'I_nwp']]
             # cols_data  = df_raw.columns[1:]   
-            df_data_x    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
+            df_data_x    = df_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
             df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
             df_data_y    = df_raw[[self.target]]  
 
             # scaling  
-            train_data_x = df_data_x[border1s[0]:border2s[0]] 
-            train_data_v = df_data_v[border1s[0]:border2s[0]] 
-            train_data_y = df_data_y[border1s[0]:border2s[0]] 
+            train_data_x = df_train_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
+            train_data_v = df_train_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
+            train_data_y = df_train_raw[[self.target]]  
              
  
             self.scaler_x.fit(train_data_x.values) 
@@ -168,7 +143,7 @@ class DatasetCUEE(data.Dataset):
             data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1)) 
  
             # time stamp 
-            df_stamp = df_raw[['Datetime']][border1:border2]
+            df_stamp = df_raw[['Datetime']]
             df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)  
              
             if self.timeenc == 0:
@@ -186,10 +161,9 @@ class DatasetCUEE(data.Dataset):
                 data_stamp = data_stamp.transpose(1, 0)
 
             # putting them into x and y    
-            data_x_list.append(data_x[border1:border2,:])  # data[border1:border2, -1] data[border1:border2]
-            data_v_list.append(data_v[border1:border2,:]) 
-
-            data_y_list.append(data_y[border1:border2,:].reshape(-1,1))  # data[border1:border2,-1].reshape(-1,1)   data[border1:border2]
+            data_x_list.append(data_x)  # data[border1:border2, -1] data[border1:border2]
+            data_v_list.append(data_v) 
+            data_y_list.append(data_y.reshape(-1,1))  # data[border1:border2,-1].reshape(-1,1)   data[border1:border2]
             
  
             data_stamp_list.append(data_stamp) 
