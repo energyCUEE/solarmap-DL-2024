@@ -113,8 +113,8 @@ This will result in a figure containing the validation:
   ![image](pics/RLSTM_pred_1_validate_d-model-8-128.png)
 
   - Informer
-  ![image](pics/RLSTM_pred_1_validate_d-model-8-128.png)
-  
+  ![image](pics/Informer_pred_1_validate_d-model-8-128.png)
+
 5. Example outputs 
 
 
