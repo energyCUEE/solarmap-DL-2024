@@ -10,7 +10,7 @@ data_dict = {
     'ETTm2': Dataset_ETT_minute,
     'custom': Dataset_Custom,
     'CUEE':  DatasetCUEE,
-    'PMASCUEE':  DatasetCUEE,
+    'CUEE_PMAS':  DatasetCUEE,
 }
 
 

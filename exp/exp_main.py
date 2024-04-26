@@ -150,6 +150,7 @@ class Exp_Main(Exp_Basic):
             
                 iter_count += 1
                 model_optim.zero_grad()
+
                 batch_x = batch_x.float().to(self.device) 
                 batch_y = batch_y.float().to(self.device)
                 batch_v = batch_v.float().to(self.device)
@@ -158,8 +159,8 @@ class Exp_Main(Exp_Basic):
                 batch_y_mark = batch_y_mark.float().to(self.device)
                 batch_v_mark = batch_v_mark.float().to(self.device)
 
-                batch_size, pred_len, pred_feature = batch_y.shape
-
+                batch_size, pred_len, pred_feature = batch_y.shape 
+ 
                 # decoder input 
                 # dec_inp = torch.zeros(self.args.batch_size, self.args.pred_len, self.args.enc_in ).float().to(self.device)
                 # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device) 
@@ -171,10 +172,11 @@ class Exp_Main(Exp_Basic):
                         outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0] 
                     else: 
                         # dec_inp = Batch x Pred_len x Feat  
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark, batch_y)
+                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_y_mark, batch_y)
                 
                 # print(outputs.shape,batch_y.shape)
-                #f_dim = -1 if self.args.features == 'MS' else 0  
+                #f_dim = -1 if self.args.features == 'MS' else 0   
+ 
                 outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
                 batch_y = batch_y.to(self.device)
 

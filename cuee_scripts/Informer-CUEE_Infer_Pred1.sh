@@ -6,7 +6,8 @@ if [ ! -d "./logs/LongForecasting" ]; then
     mkdir ./logs/LongForecasting
 fi
 
-pred_len=4
+
+pred_len=1
 label_len=0  
 moving_avg=4
 batch_size=64
@@ -16,8 +17,7 @@ target=I
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
-num_features=7
-d_model=32
+num_features=7 
 
 model_name=Informer 
 mode=val # test val 

@@ -1,32 +1,27 @@
 import os
 import csv
 import pdb
+
+dataset = "CUEE_PMAS"
 main_folder_path = "checkpoints"
-model_name = "Informer"
+val_folder_path  = "valids"
+model_name = "RLSTM" #"Informer"
 seq_length = 37
-pred_length = 4
+pred_length = 1
 mode = "MS"
 batch_size = 64
 moving_average  = 4
+fc = 1 # 3
+
 folder_list = [
-    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"   % (seq_length, pred_length, model_name, moving_average, mode, batch_size, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm16_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name, moving_average, mode, batch_size, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm32_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name, moving_average, mode, batch_size, seq_length, pred_length), 
-    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm64_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name,  moving_average, mode, batch_size, seq_length, pred_length),
-    "CUEEData_%d_%d_%s_CUEE_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm128_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, moving_average,  mode,batch_size,  seq_length, pred_length),
-    # "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm256_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
-    # "CUEEData_%d_%d_%s_CUEE_mv37_ftS_btch128_sl%d_ll0_pl%d_dm512_nh8_el2_dl1_df2048_fc1_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name, seq_length, pred_length),
+    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm8_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc),
+    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm16_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc),
+    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm32_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc), 
+    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm64_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc),
+    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm128_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0" % (dataset, seq_length, pred_length, model_name, dataset, moving_average,  mode,batch_size,  seq_length, pred_length, fc), 
 ]
 
-# folder_list = [
-#     "CUEEData_%d_%d_%s_CUEE_mv37_ftMS_btch128_sl24_ll0_pl4_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"   % (seq_length, pred_length, model_name),
-#     "CUEEData_%d_%d_%s_CUEE_mv37_ftMS_btch128_sl24_ll0_pl4_dm16_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name),
-#     "CUEEData_%d_%d_%s_CUEE_mv37_ftMS_btch128_sl24_ll0_pl4_dm32_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name),
-#     "CUEEData_%d_%d_%s_CUEE_mv37_ftMS_btch128_sl24_ll0_pl4_dm64_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0"  % (seq_length, pred_length, model_name),
-#     "CUEEData_%d_%d_%s_CUEE_mv37_ftMS_btch128_sl24_ll0_pl4_dm128_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name),
-#     "CUEEData_%d_%d_%s_CUEE_mv37_ftMS_btch128_sl24_ll0_pl4_dm256_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name),
-#     "CUEEData_%d_%d_%s_CUEE_mv37_ftMS_btch128_sl24_ll0_pl4_dm512_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0" % (seq_length, pred_length, model_name),
-# ]
+ 
 
 d_model = []
 n_param = []
@@ -34,8 +29,8 @@ overall_mae_list = []
 overall_mse_list = []
 
 for folder_ in folder_list:
-    setting_path_csv = os.path.join(main_folder_path, folder_, "model_setting.csv")
-    result_stat_path_csv    = os.path.join(main_folder_path, folder_, "stats.csv")
+    setting_path_csv       = os.path.join(main_folder_path, folder_, "model_setting.csv")
+    result_stat_path_csv   = os.path.join(val_folder_path, folder_, "stats.csv")
     
     with open(setting_path_csv) as csv_file:
         d_reader = csv.reader(csv_file)

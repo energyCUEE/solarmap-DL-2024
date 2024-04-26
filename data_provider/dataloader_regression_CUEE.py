@@ -70,12 +70,13 @@ class DatasetCUEE(data.Dataset):
         self.root_path  = root_path   
 
         if  ("CUEE_PMAS" in root_path):
-            self.train_data_path  = train_data_path  
-            self.test_data_path  = test_data_path 
 
-            if self.flag == "train":
-                self.data_path  = train_data_path 
-            elif self.flag == "test":
+            
+            self.train_data_path  = train_data_path   
+ 
+            if self.flag == "train": 
+                self.data_path  = train_data_path  
+            elif (self.flag == "test") or (self.flag == "val"): 
                 self.data_path  = test_data_path  
         else: 
             self.data_path  = data_path 
@@ -85,11 +86,13 @@ class DatasetCUEE(data.Dataset):
     def __read_data__(self): 
         
         raw_data = []
+
+
  
         train_data     = pd.read_csv(os.path.join(self.root_path, self.train_data_path) ) 
         read_data      = pd.read_csv(os.path.join(self.root_path, self.data_path) ) 
-
-        raw_train_data = train_data[['Datetime', 'site_name', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1', 'day', 'month', 'hour', 'minute', 'temperature', 'I_nwp']].copy() 
+ 
+        raw_train_data = train_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'temperature', 'I_nwp']].copy() 
         raw_train_data['Datetime']     = pd.to_datetime(raw_train_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
         raw_train_data["hour"]         = [ date.hour   for date in raw_train_data['Datetime'] ]
         raw_train_data['day']          = [ date.day    for date in raw_train_data['Datetime'] ]
@@ -97,7 +100,7 @@ class DatasetCUEE(data.Dataset):
         raw_train_data['minute']       = [ date.minute for date in raw_train_data['Datetime'] ]
 
         #'updated_measurement_Iclr_new.csv'   
-        raw_data       =  read_data[['Datetime', 'site_name', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1', 'day', 'month', 'hour', 'minute', 'temperature', 'I_nwp']].copy()  
+        raw_data       =  read_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'temperature', 'I_nwp']].copy()  
         raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
         raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
         raw_data['day']          = [ date.day    for date in raw_data['Datetime'] ]
@@ -119,17 +122,17 @@ class DatasetCUEE(data.Dataset):
             df_train_raw     = choose_stations(df_raw_train, station_num_list=[station_num])   
             df_raw     = choose_stations(df_raw_time, station_num_list=[station_num])  
   
- 
+            
             # The last attribute is also a target attribute ... 
             #df_raw       = df_raw[['Datetime', 'site_name', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1', 'day', 'month', 'hour', 'minute', 'temperature', 'I_nwp']]
             # cols_data  = df_raw.columns[1:]   
-            df_data_x    = df_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
-            df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
+            df_data_x    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] # ['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
+            df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
             df_data_y    = df_raw[[self.target]]  
 
             # scaling  
-            train_data_x = df_train_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
-            train_data_v = df_train_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']]
+            train_data_x = df_train_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] # ['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
+            train_data_v = df_train_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
             train_data_y = df_train_raw[[self.target]]  
              
  
@@ -143,9 +146,9 @@ class DatasetCUEE(data.Dataset):
             data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1)) 
  
             # time stamp 
-            df_stamp = df_raw[['Datetime']]
-            df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)  
-             
+            df_stamp = df_raw.loc[:,['Datetime']]  
+            df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)   
+
             if self.timeenc == 0:
                 df_stamp['month']   = df_stamp.Datetime.apply(lambda row: row.month, 1)
                 df_stamp['day']     = df_stamp.Datetime.apply(lambda row: row.day, 1)
@@ -178,17 +181,20 @@ class DatasetCUEE(data.Dataset):
 
         s_begin = index
         s_end   = s_begin + self.seq_len
-        
+         
         ov_begin = s_end  - self.label_len
-        ov_end   = s_end  + self.pred_len  
-
+        ov_end   = s_end  + self.pred_len
+ 
         r_begin = s_end  
-        r_end   = r_begin  + self.pred_len
+        r_end   = s_end  + self.pred_len
  
         seq_x = self.data_x[s_begin:s_end] 
         seq_y = self.data_y[r_begin:r_end]
 
-        seq_v = self.data_v[ov_begin:ov_end] 
+        if self.label_len < 1:
+            seq_v = torch.zeros(self.pred_len, seq_x.shape[-1]) # 1 x Feat size
+        else:
+            seq_v = self.data_v[ov_begin:ov_end] 
 
 
         seq_x_mark = self.data_stamp[s_begin:s_end] 
@@ -222,7 +228,6 @@ if __name__ == "__main__":
 
         for seq_i in range(4):
             trues_rev = dataset.inverse_transform_y(seq_y[:,seq_i,:])
-            pdb.set_trace()
             trues_rev_list.append(trues_rev)
     
 

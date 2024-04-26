@@ -5,12 +5,14 @@ from torch.utils.data import DataLoader
 import os
 import numpy as np
 
-CUEE_ROOT = os.path.join(os.getcwd(),'dataset/CUEE')
-CUEE_DATA = 'updated_measurement_Iclr_new.csv'
+CUEE_ROOT = os.path.join(os.getcwd(),'dataset/CUEE_PMAS')
+CUEE_DATA = "pmaps_test_data.csv"
+PMAS_CUEE_TEST  = "pmaps_test_data.csv"
+PMAS_CUEE_TRAIN = "pmaps_train_data.csv"
 
 size = [37, 0, 4]
 
-dataset    = DatasetCUEE(root_path = CUEE_ROOT, flag='test', size=size, features='MS', data_path=CUEE_DATA, target='I', scale=True, timeenc=1, freq='h', train_only=False)
+dataset    = DatasetCUEE(root_path= CUEE_ROOT,  test_data_path=PMAS_CUEE_TEST, train_data_path=PMAS_CUEE_TRAIN, data_path=CUEE_DATA, flag='test', size=size, features='MS',  target='I', scale=True, timeenc=1, freq='h', train_only=False)
 dataloader = DataLoader(dataset, batch_size=1)
 
 trues_rev_list = []

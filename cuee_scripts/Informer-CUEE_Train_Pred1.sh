@@ -6,7 +6,7 @@ if [ ! -d "./logs/LongForecasting" ]; then
     mkdir ./logs/LongForecasting
 fi
 
-pred_len=4
+pred_len=1
 label_len=0  
 moving_avg=4
 batch_size=64
@@ -46,6 +46,6 @@ python -u run_longExp.py \
     --dec_in $num_features \
     --c_out  $num_features \
     --des 'Exp' \
-    --batch_size $batch_size --itr 1  
+    --batch_size $batch_size --learning_rate 0.0001 --itr 1  
 done
  
