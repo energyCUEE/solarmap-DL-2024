@@ -120,4 +120,4 @@ This will result in a figure containing the validation:
 
   - Output in `valids` folder: 
  
-  ![image](pics/pred-4.png)
+  ![image](pics/pred-1.png)

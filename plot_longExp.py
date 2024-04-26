@@ -201,7 +201,7 @@ seq_len = args.seq_len
 pred_len = args.pred_len 
  
 
-fig, ax = plt.subplots(args.pred_len,1, figsize=(20,2*15), sharey=True)   
+  
 horizon_list = range(0,16) #[15, 30, 45, 60] 
 
 if args.mode == "test":
@@ -213,8 +213,9 @@ folder_path = os.path.join(main_folder_path, setting, 'pred-%d.png' % pred_len)
 
 print("\n ============ %s ============  \n" % folder_path)
 if args.pred_len == 1:
+    fig, ax = plt.subplots(args.pred_len,1, figsize=(20,10), sharey=True) 
 
-    num_pred = 100 
+    num_pred = 500 
     start = random.randint(0, preds.shape[0])
     stop = start + num_pred 
 
@@ -244,6 +245,8 @@ if args.pred_len == 1:
     plt.savefig(folder_path)
 
 else:
+    fig, ax = plt.subplots(args.pred_len,1, figsize=(20,2*15), sharey=True) 
+
     num_pred = 500 
     
     start =  random.randint(0, preds.shape[0])
