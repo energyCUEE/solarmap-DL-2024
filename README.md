@@ -1,15 +1,15 @@
 # Quick start
 
-1. Put your data into 'dataset/CUEE_PMAS' ... That is ... 
-  - 'dataset/CUEE_PMAS/pmaps_test_data.csv'
-  - 'dataset/CUEE_PMAS/pmaps_train_data.csv'
+1. Put your data into 'dataset/CUEE_PMAPS' ... That is ... 
+  - 'dataset/CUEE_PMAPS/pmaps_test_data.csv'
+  - 'dataset/CUEE_PMAPS/pmaps_train_data.csv'
+  - 'dataset/CUEE_PMAPS/pmaps_valid_data.csv'
 
 2. Run a script to train a model in 'cuee_scripts/Long-Exp' folder. For example,
 
 ```
 ./cuee_scripts/Long-Exp/LSTM-CUEE_Train_Pred1.sh
 ```
-
 
 - The results of the training will be saved in 
   - `checkpoints` folder. For example, ...
@@ -19,7 +19,7 @@
 3. Then, you may run another script to get the following plot:
 
 ```
-./cuee_scripts/Long-Exp/LSTM-CUEE_Infer_Pred1.sh
+./cuee_scripts/Long-Exp/LSTM-CUEE_Infer_Pred1_valid_mode.sh
 ```
 
 Here, we have a mode to run validation or testing... 
@@ -36,15 +36,15 @@ mode=val # test or val
 
 for d_model in 8 16 32 64 128
 do
-python -u plot_longExp.py \
+python -u infer_longExp.py \
     --mode $mode \
-    --root_path ./dataset/CUEE_PMAS/ \
+    --root_path ./dataset/CUEE_PMAPS/ \
     --test_data_path pmaps_test_data.csv \
     --train_data_path pmaps_train_data.csv \
-    --model_id CUEE_PMAS_$seq_len'_'$pred_len \
+    --model_id CUEE_PMAPS_$seq_len'_'$pred_len \
     --model $model_name \
     --moving_avg $moving_avg \
-    --data CUEE_PMAS \
+    --data CUEE_PMAPS \
     --features $feature_type \
     --target $target \
     --seq_len $seq_len \
@@ -63,13 +63,13 @@ done
 
   - The results of the training will be saved in 
     - `valids` folder. For example, ...
-      `./valids/CUEE_PMAS_37_1_Informer_CUEE_PMAS_mv4_ftMS_btch64_sl37_ll0_pl1_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0` containing the plots and stats of the algorithm performance.
+      `./valids/CUEE_PMAPS_37_1_Informer_CUEE_PMAPS_mv4_ftMS_btch64_sl37_ll0_pl1_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0` containing the plots and stats of the algorithm performance.
 
     - `results` folder. For example, ...
-      `./results/CUEE_PMAS_37_1_Informer_CUEE_PMAS_mv4_ftMS_btch64_sl37_ll0_pl1_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0` containing the plots and stats of the algorithm performance.
+      `./results/CUEE_PMAPS_37_1_Informer_CUEE_PMAPS_mv4_ftMS_btch64_sl37_ll0_pl1_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0` containing the plots and stats of the algorithm performance.
 
     - `checkpoints` folder. For example, ...
-      `./checkpoints/CUEE_PMAS_37_1_Informer_CUEE_PMAS_mv4_ftMS_btch64_sl37_ll0_pl1_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0` containing the weights
+      `./checkpoints/CUEE_PMAPS_37_1_Informer_CUEE_PMAPS_mv4_ftMS_btch64_sl37_ll0_pl1_dm8_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_0` containing the weights
 
 
 
@@ -87,7 +87,7 @@ import os
 import csv
 import pdb
 
-dataset = "CUEE_PMAS"
+dataset = "CUEE_PMAPS"
 main_folder_path = "checkpoints"
 val_folder_path  = "valids"
 model_name = "RLSTM" #"Informer"
@@ -115,9 +115,16 @@ This will result in a figure containing the validation:
   - Informer
   ![image](pics/Informer_pred_1_validate_d-model-8-128.png)
 
-5. Example outputs 
+5. Example outputs from validation can be observed from ... 
 
 
   - Output in `valids` folder: 
  
   ![image](pics/pred-1.png)
+
+6. Run inference on testing set...  
+
+```
+./cuee_scripts/Long-Exp/LSTM-CUEE_Infer_Pred1_test_mode.sh
+```
+ 
