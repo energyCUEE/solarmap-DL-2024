@@ -16,7 +16,7 @@ target=I
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
-num_features=7 
+num_features=12 
 
 model_name=RLSTM 
 

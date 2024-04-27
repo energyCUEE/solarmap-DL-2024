@@ -9,16 +9,16 @@ model_name = "RLSTM" #"Informer"
 seq_length = 37
 pred_length = 1
 mode = "MS"
-batch_size = 64
+enc = 12
 moving_average  = 4
 fc = 1 # 3
 
 folder_list = [
-    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm8_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc),
-    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm16_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc),
-    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm32_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc), 
-    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm64_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, batch_size, seq_length, pred_length, fc),
-    "%s_%d_%d_%s_%s_mv%d_ft%s_btch%d_sl%d_ll0_pl%d_dm128_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0" % (dataset, seq_length, pred_length, model_name, dataset, moving_average,  mode,batch_size,  seq_length, pred_length, fc), 
+    "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll0_pl%d_dm8_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, pred_length, fc),
+    "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll0_pl%d_dm16_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, pred_length, fc),
+    "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll0_pl%d_dm32_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, pred_length, fc), 
+    "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll0_pl%d_dm64_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"  % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, pred_length, fc),
+    "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll0_pl%d_dm128_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0" % (dataset, seq_length, pred_length, model_name, dataset, moving_average,  mode, enc,  seq_length, pred_length, fc), 
 ]
 
  

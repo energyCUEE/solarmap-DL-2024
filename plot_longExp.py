@@ -142,13 +142,13 @@ print(args)
 
 ii = 0
 if args.model == "PatchTST":
-    setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
+    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
         args.model_id,
         args.model,
         args.data,
         args.moving_avg,
         args.features,
-        args.batch_size,
+        args.enc_in,
         args.seq_len,
         args.label_len,
         args.pred_len,
@@ -165,12 +165,12 @@ if args.model == "PatchTST":
         args.des, ii)
 else:
 
-    setting = '{}_{}_{}_mv{}_ft{}_btch{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
+    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
         args.model,
         args.data,
         args.moving_avg,
         args.features,
-        args.batch_size,
+        args.enc_in,
         args.seq_len,
         args.label_len,
         args.pred_len,
