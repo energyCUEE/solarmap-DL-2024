@@ -50,8 +50,9 @@ parser.add_argument('--model', type=str, required=True, default='Autoformer',
 parser.add_argument('--data', type=str, required=True, default='ETTm1', help='dataset type')
 parser.add_argument('--root_path', type=str, default='./data/ETT/', help='root path of the data file')
 parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
-parser.add_argument('--test_data_path', type=str, default='pmaps_test_data.csv', help='data file')
+parser.add_argument('--test_data_path', type=str, default='pmaps_test_data.csv', help='data file')  
 parser.add_argument('--train_data_path', type=str, default='pmaps_train_data.csv', help='data file')
+parser.add_argument('--valid_data_path', type=str, default='pmaps_validate_data.csv', help='data file')
 
 
 parser.add_argument('--features', type=str, default='M',
@@ -202,7 +203,7 @@ pred_len = args.pred_len
  
 
   
-horizon_list = range(0,16) #[15, 30, 45, 60] 
+horizon_list = range(0,76,15) #[15, 30, 45, 60] 
 
 if args.mode == "test":
     main_folder_path = "results" 
@@ -270,7 +271,7 @@ else:
             ax[pred_index].set_xticklabels(time_predictions_[time_x_tick] , rotation=45, ha='right') 
         else:
             ax[pred_index].set_xticklabels(time_x_tick/36, rotation=45, ha='right') 
-        ax[pred_index].set_title("MAE %0.2f @ Horrizon %d mins ahead" % (mae[pred_index], horizon_list[pred_index]))
+        ax[pred_index].set_title("MAE %0.2f @ Horrizon %d mins ahead" % (mae[pred_index], horizon_list[pred_index+1]))
         ax[pred_index].legend()  
         ax[pred_index].grid(True)
         ax[pred_index].set_ylabel("$Watt/m^2$")

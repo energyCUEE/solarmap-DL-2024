@@ -2,16 +2,16 @@ import os
 import csv
 import pdb
 
-dataset = "CUEE_PMAS"
+dataset = "CUEE_PMAPS"
 main_folder_path = "checkpoints"
 val_folder_path  = "valids"
-model_name = "RLSTM" #"Informer"
+model_name = "Informer" #"Informer"
 seq_length = 37
 pred_length = 1
 mode = "MS"
 enc = 12
 moving_average  = 4
-fc = 1 # 3
+fc = 3 # 1
 
 folder_list = [
     "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll0_pl%d_dm8_nh8_el2_dl1_df2048_fc%d_ebtimeF_dtTrue_Exp_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, pred_length, fc),

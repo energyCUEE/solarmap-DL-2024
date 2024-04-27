@@ -8,9 +8,8 @@ data_dict = {
     'ETTh2': Dataset_ETT_hour,
     'ETTm1': Dataset_ETT_minute,
     'ETTm2': Dataset_ETT_minute,
-    'custom': Dataset_Custom,
-    'CUEE':  DatasetCUEE,
-    'CUEE_PMAS':  DatasetCUEE,
+    'custom': Dataset_Custom, 
+    'CUEE_PMAPS':  DatasetCUEE,
 }
 
 
@@ -24,32 +23,31 @@ def data_provider(args, flag):
         drop_last = False
         batch_size = args.batch_size
         freq = args.freq
+ 
 
-    elif flag == 'pred' and not(args.data == 'CUEE'):
-        shuffle_flag = False
-        drop_last = False
-        batch_size = 1
-        freq = args.freq
-        Data = Dataset_Pred
-
-    elif flag == 'pred' and (args.data == 'CUEE'):
+    elif flag == 'pred':
         shuffle_flag = False
         drop_last = False
         args.batch_size = 1
         freq = args.freq 
 
-    else:
+    elif flag == 'train':
+
         shuffle_flag = True
         drop_last = True
         batch_size = args.batch_size
         freq = args.freq
+    
+    else:
+        print("flag can only be set to one of these: 'test' / 'val' / 'pred' / 'train'")
+        KeyError
 
-
-    if args.data == "PMASCUEE":
-        
+    if args.data == "CUEE_PMAPS":
+  
         data_set = Data(
             root_path=args.root_path,
             test_data_path=args.test_data_path,
+            valid_data_path=args.valid_data_path,
             train_data_path=args.train_data_path, 
             flag=flag,
             size=[args.seq_len, args.label_len, args.pred_len],
@@ -73,8 +71,8 @@ def data_provider(args, flag):
             freq=freq,
             train_only=train_only
         ) 
-    
-    print(flag, len(data_set))
+     
+    print("After preprocessing .... [%s] : %d" % (flag, len(data_set)))
     data_loader = DataLoader(
         data_set,
         batch_size=batch_size,

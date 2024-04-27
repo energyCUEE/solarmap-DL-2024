@@ -6,6 +6,7 @@ if [ ! -d "./logs/LongForecasting" ]; then
     mkdir ./logs/LongForecasting
 fi
 
+
 pred_len=1
 label_len=0  
 moving_avg=4
@@ -19,11 +20,12 @@ feature_type=MS
 num_features=12 
 
 model_name=Informer 
+mode=val # test val 
 
 for d_model in 8 16 32
 do
-python -u run_longExp.py \
-    --is_training 1 \
+python -u infer_longExp.py \
+    --mode $mode \
     --root_path ./dataset/CUEE_PMAPS/ \
     --test_data_path pmaps_test_data.csv \
     --valid_data_path pmaps_validate_data.csv \
@@ -47,6 +49,5 @@ python -u run_longExp.py \
     --dec_in $num_features \
     --c_out  $num_features \
     --des 'Exp' \
-    --batch_size $batch_size --learning_rate 0.0001 --itr 1  
+    --batch_size $batch_size --itr 1  
 done
- 

@@ -24,13 +24,14 @@ for d_model in 8 16 32 64 128
 do
 python -u run_longExp.py \
     --is_training 1 \
-    --root_path ./dataset/CUEE_PMAS/ \
+    --root_path ./dataset/CUEE_PMAPS/ \
     --test_data_path pmaps_test_data.csv \
+    --valid_data_path pmaps_validate_data.csv \
     --train_data_path pmaps_train_data.csv \
-    --model_id CUEE_PMAS_$seq_len'_'$pred_len \
+    --model_id CUEE_PMAPS_$seq_len'_'$pred_len \
     --model $model_name \
     --moving_avg $moving_avg \
-    --data CUEE_PMAS \
+    --data CUEE_PMAPS \
     --features $feature_type \
     --target $target \
     --seq_len $seq_len \

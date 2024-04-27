@@ -16,6 +16,7 @@ from utils.timefeatures import time_features
 CUEE_ROOT = os.path.join(os.getcwd(),'data')
 CUEE_DATA = 'updated_measurement_Iclr_new.csv'
 PMAS_CUEE_TEST  = "pmaps_test_data.csv"
+PMAS_CUEE_VALID = "pmaps_validate_data.csv"
 PMAS_CUEE_TRAIN = "pmaps_train_data.csv"
 
 def npdatetime_to_string(numpy_array):   
@@ -34,7 +35,7 @@ def choose_stations(data, station_num_list=["ISL052"]):
  
 class DatasetCUEE(data.Dataset):
     def __init__(self,  root_path = CUEE_ROOT, flag='train', size=None, features='S',  
-                test_data_path=PMAS_CUEE_TEST, train_data_path=PMAS_CUEE_TRAIN, data_path=CUEE_DATA,   target='I', scale=True, timeenc=0, freq='h', train_only=False ):
+                test_data_path=PMAS_CUEE_TEST, valid_data_path=PMAS_CUEE_VALID, train_data_path=PMAS_CUEE_TRAIN, data_path=CUEE_DATA,   target='I', scale=True, timeenc=0, freq='h', train_only=False ):
         super(DatasetCUEE, self).__init__()
 
 
@@ -68,16 +69,20 @@ class DatasetCUEE(data.Dataset):
         self.flag = flag
  
         self.root_path  = root_path   
-
-        if  ("CUEE_PMAS" in root_path):
-
+     
+        if  ("CUEE_PMAPS" in root_path): 
             
             self.train_data_path  = train_data_path   
  
             if self.flag == "train": 
                 self.data_path  = train_data_path  
-            elif (self.flag == "test") or (self.flag == "val"): 
-                self.data_path  = test_data_path  
+
+            elif (self.flag == "val"): 
+                self.data_path  = valid_data_path 
+
+            elif (self.flag == "test"):
+                self.data_path  = test_data_path 
+             
         else: 
             self.data_path  = data_path 
 
@@ -85,9 +90,7 @@ class DatasetCUEE(data.Dataset):
 
     def __read_data__(self): 
         
-        raw_data = []
-
-
+        raw_data = [] 
  
         train_data     = pd.read_csv(os.path.join(self.root_path, self.train_data_path) ) 
         read_data      = pd.read_csv(os.path.join(self.root_path, self.data_path) ) 
@@ -107,10 +110,12 @@ class DatasetCUEE(data.Dataset):
         raw_data['month']        = [ date.month  for date in raw_data['Datetime'] ]
         raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ]
 
-            # Shift Iclr to one step in feature and use it as a feature... 
+        # Shift Iclr to one step in feature and use it as a feature... 
 
+        print("Flag %s => Total: %d" % (self.flag, len(read_data)))
+        print("... filtering out night time and concatenating data from each station")
         df_raw_train  = choose_daytimehours(raw_train_data, start=1, end=9)   
-        df_raw_time = choose_daytimehours(raw_data, start=1, end=9) 
+        df_raw_time   = choose_daytimehours(raw_data, start=1, end=9) 
         
         data_x_list = []
         data_v_list = []
@@ -120,8 +125,8 @@ class DatasetCUEE(data.Dataset):
         for station_num in self.stations_list: 
 
             df_train_raw     = choose_stations(df_raw_train, station_num_list=[station_num])   
-            df_raw     = choose_stations(df_raw_time, station_num_list=[station_num])  
-  
+            df_raw           = choose_stations(df_raw_time, station_num_list=[station_num])  
+ 
             
             # The last attribute is also a target attribute ...  
             # cols_data  = df_raw.columns[1:]   
