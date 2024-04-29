@@ -2,7 +2,8 @@ from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST, RLSTM
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
-from utils.metrics import metric
+from utils.metrics import metric, MAE
+import csv
 
 import numpy as np
 import pandas as pd
@@ -62,6 +63,7 @@ class Exp_Main(Exp_Basic):
 
     def vali(self, vali_data, vali_loader, criterion):
         total_loss = []
+        total_MAE  = []
         self.model.eval()
         with torch.no_grad():
             for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(vali_loader):  ###### <<<<
@@ -100,11 +102,18 @@ class Exp_Main(Exp_Basic):
 
                 #loss = criterion(pred, true)
                 loss = np.mean((pred.numpy() - true.numpy()) ** 2)   
-
                 total_loss.append(loss)
+ 
+                pred_rev = vali_data.inverse_transform_y(pred.view(-1,1).numpy())
+                true_rev = vali_data.inverse_transform_y(true.view(-1,1).numpy())
+                MAE_loss  = MAE(pred_rev, true_rev)
+                total_MAE.append(MAE_loss)
+
+
         total_loss = np.average(total_loss)
+        total_MAE  = np.average(total_MAE) 
         self.model.train()
-        return total_loss
+        return total_loss, total_MAE
 
     def train(self, setting):
         
@@ -137,11 +146,15 @@ class Exp_Main(Exp_Basic):
                                             pct_start = self.args.pct_start,
                                             epochs = self.args.train_epochs,
                                             max_lr = self.args.learning_rate)
+        
+ 
 
+        stat_ep_list = []
         for epoch in range(self.args.train_epochs):
             
             iter_count = 0
             train_loss = []
+            train_MAE  = []
 
             self.model.train()
             epoch_time = time.time()
@@ -167,9 +180,13 @@ class Exp_Main(Exp_Basic):
                 # encoder - decoder 
                 if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model: 
                         outputs = self.model(batch_x)
+
                 else:
+
                     if self.args.output_attention:
+                    
                         outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0] 
+                    
                     else: 
                         # dec_inp = Batch x Pred_len x Feat  
                         outputs = self.model(batch_x, batch_x_mark, batch_v, batch_y_mark, batch_y)
@@ -182,6 +199,12 @@ class Exp_Main(Exp_Basic):
 
                 loss    = criterion(outputs, batch_y)
                 train_loss.append(loss.item())
+                 
+                output_rev_scale = train_data.inverse_transform_y(outputs.view(-1,1).detach().cpu().numpy())
+                target_rev_scale = train_data.inverse_transform_y(batch_y.view(-1,1).detach().cpu().numpy())
+                 
+                train_mae  = MAE(output_rev_scale, target_rev_scale) 
+                train_MAE.append(train_mae)
 
                 if (i + 1) % 100 == 0:
 
@@ -207,9 +230,11 @@ class Exp_Main(Exp_Basic):
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
+            train_MAE  = np.average(train_MAE)
+
             if not self.args.train_only:
-                vali_loss = self.vali(vali_data, vali_loader, criterion)
-                test_loss = self.vali(test_data, test_loader, criterion)
+                vali_loss, vali_MAE = self.vali(vali_data, vali_loader, criterion)
+                test_loss, test_MAE = self.vali(test_data, test_loader, criterion)
 
                 print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                     epoch + 1, train_steps, train_loss, vali_loss, test_loss))
@@ -219,6 +244,8 @@ class Exp_Main(Exp_Basic):
                 print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f}".format(
                     epoch + 1, train_steps, train_loss))
                 early_stopping(train_loss, self.model, path)
+            
+            stat_ep_list.append({"train_MAE":train_MAE, "valid_MAE":vali_MAE, "test_MAE":test_MAE, "train_loss": train_loss, "vali_loss": vali_loss, "test_loss": test_loss})
 
             if early_stopping.early_stop:
                 print("Early stopping")
@@ -228,6 +255,12 @@ class Exp_Main(Exp_Basic):
                 adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
             else:
                 print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
+
+        
+        Stats_ep = pd.DataFrame(stat_ep_list)
+        Stats_keys = stat_ep_list[0].keys()
+
+        Stats_ep.to_csv(os.path.join(path, 'stats_mae_loss_ep.csv' ), header=Stats_keys, index=False)  
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))   
@@ -288,7 +321,9 @@ class Exp_Main(Exp_Basic):
 
                 preds.append(pred)
                 trues.append(true)
-                inputx.append(batch_x.detach().cpu().numpy())
+                inputx.append(batch_x.detach().cpu().numpy()) 
+                
+
                 if i % 20 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
@@ -311,27 +346,43 @@ class Exp_Main(Exp_Basic):
         folder_path = './results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
- 
-        mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues) 
+  
         
-        print('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
-        f = open(folder_path + "result.txt", 'a')
-        f.write(setting + "  \n")
-        f.write('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
-        f.write('\n')
-        f.write('\n')
-        f.close()
+        mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues) 
+
+        pred_rev = test_data.inverse_transform_y(preds.reshape(-1,1))
+        true_rev = test_data.inverse_transform_y(trues.reshape(-1,1))
+
+        mae_rev, mse_rev, _, _, _, rse_rev, _ = metric(pred_rev, true_rev) 
+        
+        print("On testing dataset ....")
+        print('scal: mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
+        print('revs: mse:{}, mae:{}, rse:{}'.format(mse_rev, mae_rev, rse_rev))
+ 
 
         result_dict = {}
         result_dict["inputx"] = inputx
         result_dict["preds"] = preds
         result_dict["trues"] = trues
-        result_dict["mae"] = mae
-        result_dict["mse"] = mse
+        result_dict["preds_rev"] = pred_rev
+        result_dict["trues_rev"] = true_rev
+         
 
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
-        np.save(folder_path + 'result_dict.npy', result_dict)        
-        np.save(folder_path + 'pred.npy', preds)
+        np.save(os.path.join(folder_path, 'result_dict.npy'), result_dict)        
+
+        stats_dict = {}
+
+        stats_dict["mae"] = mae
+        stats_dict["mse"] = mse
+        stats_dict["rse"] = rse
+        stats_dict["mae_rev"] = mae_rev
+        stats_dict["mse_rev"] = mse_rev
+        stats_dict["rse_rev"] = rse_rev
+
+        with open(os.path.join(folder_path, 'stats_mae_mse.csv'), 'w') as f:
+            for key in stats_dict.keys():
+                f.write("%s,%s\n"%(key,stats_dict[key]))
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
         return

@@ -20,7 +20,7 @@ num_features=12
 
 model_name=RLSTM 
 
-for d_model in 8 16 32 64 128
+for d_model in 8 16
 do
 python -u run_longExp.py \
     --is_training 1 \

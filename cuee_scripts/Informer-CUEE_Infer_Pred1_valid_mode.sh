@@ -19,10 +19,10 @@ target=I
 feature_type=MS 
 num_features=12 
 
-model_name=Informer 
+model_name=Informer
 mode=val # test val 
 
-for d_model in 8 16 32
+for d_model in 8 16 32 64
 do
 python -u infer_longExp.py \
     --mode $mode \

@@ -19,7 +19,7 @@ target=I
 feature_type=MS 
 num_features=12 
 
-model_name=Informer 
+model_name=Informer
 mode=test # test val 
 
 d_model=32
