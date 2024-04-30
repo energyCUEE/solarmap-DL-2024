@@ -1,6 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST, RLSTM
+from models import Informer, Autoformer, RLSTM, RLSTM_ver2, Transformer, DLinear, Linear, NLinear, PatchTST
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric, MAE
 import csv
@@ -20,6 +20,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 from utils.tools import save_settings_dict
+from utils.learning_tools import plot_gradients
 
 warnings.filterwarnings('ignore')
 
@@ -36,7 +37,8 @@ class Exp_Main(Exp_Basic):
             'NLinear': NLinear,
             'Linear': Linear,
             'PatchTST': PatchTST,
-            'RLSTM': RLSTM
+            'RLSTM': RLSTM,
+            'RLSTM_ver2': RLSTM_ver2
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -228,6 +230,9 @@ class Exp_Main(Exp_Basic):
                     adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                     scheduler.step()
 
+             
+            plot_gradients(self.model,os.path.join(path, 'gradflow-@-ep-%03d.png' % epoch)) 
+            
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
             train_MAE  = np.average(train_MAE)

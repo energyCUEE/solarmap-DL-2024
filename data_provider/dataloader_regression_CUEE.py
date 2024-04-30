@@ -130,12 +130,12 @@ class DatasetCUEE(data.Dataset):
             
             # The last attribute is also a target attribute ...  
             # cols_data  = df_raw.columns[1:]   
-            df_data_x    = df_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
+            df_data_x    = df_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month',  'minute'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
             df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
             df_data_y    = df_raw[[self.target]]  
 
             # scaling  
-            train_data_x = df_train_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
+            train_data_x = df_train_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'minute'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
             train_data_v = df_train_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
             train_data_y = df_train_raw[[self.target]]  
              

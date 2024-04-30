@@ -29,9 +29,10 @@ class Model(nn.Module):
             num_layers  = self.num_layers # layer of LSTM unit of each iteration of sequence (usually set between 1-2)
         )
 
-        # Output layer for multi-step forecasting
-        self.linear1 = nn.Linear(in_features=self.hidden_units*self.seq_len, out_features=self.hidden_units*2)
-        self.linear2 = nn.Linear(in_features=self.hidden_units*2,            out_features=self.forecast_steps)
+
+        # Output layer for multi-step forecasting 
+        self.activation = nn.ReLU()
+        self.fc = nn.Linear(in_features=self.hidden_units, out_features=self.forecast_steps)
 
     def forward(self, x):
         '''
@@ -52,12 +53,12 @@ class Model(nn.Module):
         output, (hn, cn) = self.lstm(x) # , (h0, c0)
  
         # Output sequence for multi-step forecasting  
-        out = self.linear1(output.reshape([batch_size,-1])) 
+        output = self.activation(output)
  
         # Dropout layer for regularization
         #out = nn.Dropout(p=0.2)(out)
-        out = self.linear2(out).reshape([batch_size, self.forecast_steps, 1])
-        return out
+        output = self.fc(output[:, -1, :])
+        return output.reshape([batch_size, self.forecast_steps, 1])
     
 
 

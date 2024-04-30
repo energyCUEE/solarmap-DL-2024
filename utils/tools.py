@@ -135,3 +135,32 @@ def save_settings_dict(args, setting, num_params, folder='checkpoints'):
         for key, value in args_dict.items():
             writer.writerow([key, value])
  
+
+def get_folder_name(settings): 
+
+    dataset    = settings["dataset"]
+    seq_length = settings["seq_length"]
+    pred_length = settings["pred_length"]
+    model_name  = settings["network"] 
+    dataset     = settings["dataset"] 
+    moving_average = settings["moving_average"] 
+    mode  = settings["feature_mode"] 
+    enc   = settings["enc"]   
+    ll    = settings["ll"]   
+    dm    = settings["dm"] 
+    nh    = settings["nh"]  
+    el    = settings["el"]  
+    fc    = settings["fc"]  
+    time_embeding = settings["time_embeding"]  
+
+    return "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl1_df2048_fc%d_ebtime%s_dtTrue_Exp_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, fc, time_embeding)
+
+
+def get_folders_list(settings, tuning_param, value_list): 
+    folder_list = []
+    for index_, value_ in enumerate(value_list):
+        settings[tuning_param] = value_
+        folder_name_ = get_folder_name(settings)
+        folder_list.append(folder_name_)
+        print("[%d]: %s" % (index_, folder_name_) ) 
+    return folder_list

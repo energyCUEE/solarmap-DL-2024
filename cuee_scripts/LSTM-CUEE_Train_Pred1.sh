@@ -10,17 +10,18 @@ pred_len=1
 label_len=0  
 moving_avg=4
 batch_size=64
-seq_len=37
+seq_len=4
 target=I
 
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
-num_features=12 
+num_features=11 
 
 model_name=RLSTM 
+d_model=50
 
-for d_model in 8 16
+for e_layer in 1 2 10 25 50
 do
 python -u run_longExp.py \
     --is_training 1 \
@@ -38,6 +39,7 @@ python -u run_longExp.py \
     --label_len $label_len\
     --pred_len $pred_len \
     --d_model $d_model \
+    --e_layers $e_layer \
     --enc_in $num_features \
     --dec_in $num_features \
     --c_out  $num_features \
