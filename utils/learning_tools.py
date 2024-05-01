@@ -15,6 +15,7 @@ plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
+ 
 def plot_gradients(model, file_path=None):
     ave_grads, max_grads, layers = get_gradients(model)
     plot_gradient_mean_and_max_for_each_layer(ave_grads, max_grads, layers, file_path)

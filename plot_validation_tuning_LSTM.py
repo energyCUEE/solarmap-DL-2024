@@ -22,12 +22,14 @@ settings["network"]        = "RLSTM"
 
 settings["feature_mode"]   = "MS"
 settings["moving_average"] =  4 
-settings["enc"]            =  12 
-settings["ll"]             =  0
-settings["nh"]             =  8
-settings["dm"]             =  50  
-settings["el"]             =  2 
-settings["fc"]             =  1
+settings["enc_in"]         =  12 
+settings["label_len"]      =  0
+settings["n_heads"]        =  8
+settings["d_model"]        =  50 
+settings["d_layers"]       =  1   
+settings["d_ff"]           =  2048
+settings["e_layers"]       =  2 
+settings["factor"]         =  1
 settings["time_embeding"]  = "F"
  
 

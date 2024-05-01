@@ -145,15 +145,18 @@ def get_folder_name(settings):
     dataset     = settings["dataset"] 
     moving_average = settings["moving_average"] 
     mode  = settings["feature_mode"] 
-    enc   = settings["enc"]   
-    ll    = settings["ll"]   
-    dm    = settings["dm"] 
-    nh    = settings["nh"]  
-    el    = settings["el"]  
-    fc    = settings["fc"]  
+    enc   = settings["enc_in"]   
+    ll    = settings["label_len"]   
+    dm    = settings["d_model"] 
+    nh    = settings["n_heads"]  
+    el    = settings["e_layers"]  
+    dl    = settings["d_layers"] 
+    d_ff    = settings["d_ff"]
+    fc    = settings["factor"]  
     time_embeding = settings["time_embeding"]  
+    loss = settings["loss"] 
 
-    return "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl1_df2048_fc%d_ebtime%s_dtTrue_Exp_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, fc, time_embeding)
+    return "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_Exp_%sloss_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, loss)
 
 
 def get_folders_list(settings, tuning_param, value_list): 

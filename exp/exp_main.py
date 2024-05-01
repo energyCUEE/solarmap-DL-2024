@@ -59,8 +59,11 @@ class Exp_Main(Exp_Basic):
         model_optim = optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         return model_optim
 
-    def _select_criterion(self):
-        criterion = nn.MSELoss()
+    def _select_criterion(self, which_loss="mse"):
+        if which_loss == "mse":
+            criterion = nn.MSELoss()
+        elif which_loss == "l1":
+            criterion = nn.L1Loss()
         return criterion
 
     def vali(self, vali_data, vali_loader, criterion):
@@ -102,8 +105,8 @@ class Exp_Main(Exp_Basic):
                 pred = outputs.detach().cpu()
                 true = batch_y.detach().cpu()
 
-                #loss = criterion(pred, true)
-                loss = np.mean((pred.numpy() - true.numpy()) ** 2)   
+                loss = criterion(pred, true)
+                #loss = np.mean((pred.numpy() - true.numpy()) ** 2)   
                 total_loss.append(loss)
  
                 pred_rev = vali_data.inverse_transform_y(pred.view(-1,1).numpy())
@@ -138,17 +141,21 @@ class Exp_Main(Exp_Basic):
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
         model_optim = self._select_optimizer()
-        criterion   = self._select_criterion()
+        criterion   = self._select_criterion(self.args.loss)
 
         if self.args.use_amp:
             scaler = torch.cuda.amp.GradScaler()
+
+        if self.args.scheduler == "ReduceLROnPlateau":
+            scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim,
+                                                mode='min', factor=0.5, patience=1, verbose=True ) 
+        else:    
+            scheduler = lr_scheduler.OneCycleLR(optimizer = model_optim,
+                                                steps_per_epoch = train_steps,
+                                                pct_start = self.args.pct_start,
+                                                epochs = self.args.train_epochs,
+                                                max_lr = self.args.learning_rate)
             
-        scheduler = lr_scheduler.OneCycleLR(optimizer = model_optim,
-                                            steps_per_epoch = train_steps,
-                                            pct_start = self.args.pct_start,
-                                            epochs = self.args.train_epochs,
-                                            max_lr = self.args.learning_rate)
-        
  
 
         stat_ep_list = []
@@ -226,10 +233,13 @@ class Exp_Main(Exp_Basic):
                     loss.backward()
                     model_optim.step()
                     
-                if self.args.lradj == 'TST':
-                    adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
-                    scheduler.step()
-
+                if self.args.scheduler != "ReduceLROnPlateau":
+                    
+                    if self.args.lradj == 'TST':
+                        adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
+                        scheduler.step()
+                    
+                
              
             plot_gradients(self.model,os.path.join(path, 'gradflow-@-ep-%03d.png' % epoch)) 
             
@@ -239,10 +249,13 @@ class Exp_Main(Exp_Basic):
 
             if not self.args.train_only:
                 vali_loss, vali_MAE = self.vali(vali_data, vali_loader, criterion)
-                test_loss, test_MAE = self.vali(test_data, test_loader, criterion)
+                test_loss, test_MAE = self.vali(test_data, test_loader, criterion) 
 
-                print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-                    epoch + 1, train_steps, train_loss, vali_loss, test_loss))
+                print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(epoch + 1, train_steps, train_loss, vali_loss, test_loss)) 
+                print("                       | Train MAE : %3.4f Vali MAE : %3.4f Test MAE : %3.4f" % (train_MAE, vali_MAE, test_MAE))
+
+                if self.args.scheduler == "ReduceLROnPlateau": 
+                    scheduler.step(vali_loss) 
                 early_stopping(vali_loss, self.model, path)
 
             else:
@@ -255,8 +268,9 @@ class Exp_Main(Exp_Basic):
             if early_stopping.early_stop:
                 print("Early stopping")
                 break
+            
 
-            if self.args.lradj != 'TST':
+            if self.args.lradj != 'TST' and self.args.scheduler != "ReduceLROnPlateau":
                 adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
             else:
                 print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
