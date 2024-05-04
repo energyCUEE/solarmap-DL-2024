@@ -10,7 +10,7 @@ pred_len=1
 label_len=0  
 moving_avg=4
 batch_size=32
-seq_len=4
+seq_len=8
 target=I
 
 
@@ -20,20 +20,20 @@ num_features=11
 
 model_name=RLSTM 
 d_model=50
-e_layer=5
+e_layer=1
 
-for d_model in 16 32 64 128 256
+for e_layer in 1 2 5 10 15 20
 do 
 python -u run_longExp.py \
     --is_training 1 \
-    --root_path ./dataset/CUEE_PMAPS/ \
-    --test_data_path pmaps_test_data.csv \
-    --valid_data_path pmaps_validate_data.csv \
-    --train_data_path pmaps_train_data.csv \
-    --model_id CUEE_PMAPS_$seq_len'_'$pred_len \
+    --root_path ./dataset/CUEE_PMAPS_NIGHT/ \
+    --test_data_path pmaps_test_with_nighttime.csv \
+    --valid_data_path pmaps_validate_with_nighttime.csv \
+    --train_data_path pmaps_train_with_nighttime.csv \
+    --model_id CUEE_PMAPS_NIGHT_$seq_len'_'$pred_len \
     --model $model_name \
     --moving_avg $moving_avg \
-    --data CUEE_PMAPS \
+    --data CUEE_PMAPS_NIGHT \
     --features  $feature_type \
     --target    $target \
     --seq_len   $seq_len \

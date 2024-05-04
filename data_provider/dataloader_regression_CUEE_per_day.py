@@ -143,8 +143,9 @@ class DatasetCUEE(data.Dataset):
             raw_data['date']     = pd.to_datetime(raw_data['Datetime'], format='%Y-%m-%d')
             
             print("===============================================" )
+            print("Seq length: %d  so, we will start %d [%dx15] mins. before 8:00 AM" % (self.seq_len, self.seq_len*15, self.seq_len ) )
             print("Start time: %s" % start_time.strftime("%H:%M:%S"))
-            print("End time: %s" % end_time.strftime("%H:%M:%S"))
+            print("End   time: %s" % end_time.strftime("%H:%M:%S"))
             print("===============================================" )
 
             df_train_raw  = choose_date(df_train_raw, start_date=start_date )   
@@ -196,10 +197,10 @@ class DatasetCUEE(data.Dataset):
 
             df_train_raw  = choose_date(df_train_raw, start_date=start_date )   
             raw_data      = choose_date(raw_data, start_date=start_date )
-            
             print("===============================================" )
+            print("Seq length: %d  so, we will start %d [%dx15] mins. before 8:00 AM" % (self.seq_len, self.seq_len*15, self.seq_len ))
             print("Start time: %s" % start_time.strftime("%H:%M:%S"))
-            print("End time: %s" % end_time.strftime("%H:%M:%S"))
+            print("End   time: %s" % end_time.strftime("%H:%M:%S"))
             print("===============================================" )
 
             df_raw_train  = choose_datetime(df_train_raw, start_time=start_time, end_time=end_time)   
@@ -261,30 +262,36 @@ class DatasetCUEE(data.Dataset):
             self.__save_list_to_file(filename) 
 
     def __read_file_to_list(self, filename):
-         
+
+        print("Read %s" % (filename + "-seq_x_list.npy"))  
         with open(filename + "-seq_x_list.npy", 'rb') as fp:
             self.seq_x_list = pickle.load(fp)
 
+        print("Read %s" % (filename + "-seq_y_list.npy"))  
         with open(filename + "-seq_y_list.npy", 'rb') as fp:
             self.seq_y_list = pickle.load(fp) 
 
+        print("Read %s" % (filename + "-seq_v_list.npy"))  
         with open(filename + "-seq_v_list.npy", 'rb') as fp:
             self.seq_v_list = pickle.load(fp)
 
-        
+        print("Read %s" % (filename + "-seq_x_mark_list.npy"))  
         with open(filename + "-seq_x_mark_list.npy", 'rb') as fp:
             self.seq_x_mark_list = pickle.load(fp)
         
+        print("Read %s" % (filename + "-seq_v_mark_list.npy"))  
         with open(filename + "-seq_v_mark_list.npy", 'rb') as fp:
             self.seq_v_mark_list = pickle.load(fp)
 
+        print("Read %s" % (filename + "-seq_y_mark_list.npy"))  
         with open(filename + "-seq_y_mark_list.npy", 'rb') as fp:
             self.seq_y_mark_list = pickle.load(fp)
 
-
+        print("Read %s" % (filename + "-date_time_x_list.npy")) 
         with open(filename + "-date_time_x_list.npy", 'rb') as fp:
             self.date_time_x_list  = pickle.load(fp)
 
+        print("Read %s" % (filename + "-date_time_y_list.npy")) 
         with open(filename + "-date_time_y_list.npy", 'rb') as fp:
             self.date_time_y_list  = pickle.load(fp) 
 

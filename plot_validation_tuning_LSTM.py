@@ -15,7 +15,7 @@ elif which_set == "test":
     val_folder_path = "results"
 
 settings = {}
-settings["dataset"]        = "CUEE_PMAPS"
+settings["dataset"]        = "CUEE_PMAPS_NIGHT" # "CUEE_PMAPS"
 settings["seq_length"]     =  4
 settings["pred_length"]    =  1
 settings["dropout"]        = 0.1
@@ -101,9 +101,9 @@ ax2.grid(which='major', color='green', linestyle='--', linewidth=1)
 if val_folder_path == "valids":
     plt.title("Validation set")
     plt.tight_layout()
-    plt.savefig("%s_sq%d_p%d_validate_tuning-%s-%d-%d.png" % (settings["network"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 
+    plt.savefig("%s_%s_sq%d_p%d_validate_tuning-%s-%d-%d.png" % (settings["network"], settings["dataset"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 
 
 elif val_folder_path == "results":
     plt.title("Test set")
     plt.tight_layout()
-    plt.savefig("%s_sq%d_p%d_test_tuning-%s-%d-%d.png" % (settings["network"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 
+    plt.savefig("%s_%s_sq%d_p%d_test_tuning-%s-%d-%d.png" % (settings["network"], settings["dataset"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 

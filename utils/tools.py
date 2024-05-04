@@ -211,10 +211,10 @@ def get_folder_name(settings):
     fc    = settings["factor"]  
     time_embeding = settings["time_embeding"]  
     loss = settings["loss"] 
-    dp   = settings["dropout"].replace(".","p")
+    dp   = ("%.02f" % settings["dropout"]).replace(".","p")
  
 
-    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_dp%f_Exp_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, dp, loss)
+    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_dp%s_Exp_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, dp, loss)
 
 
 def get_folders_list(settings, tuning_param, value_list): 
@@ -222,6 +222,6 @@ def get_folders_list(settings, tuning_param, value_list):
     for index_, value_ in enumerate(value_list):
         settings[tuning_param] = value_
         folder_name_ = get_folder_name(settings)
-        folder_list.append(folder_name_)
+        folder_list.append(folder_name_) 
         print("[%d]: %s" % (index_, folder_name_) ) 
     return folder_list
