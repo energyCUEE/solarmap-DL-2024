@@ -136,6 +136,61 @@ def save_settings_dict(args, setting, num_params, folder='checkpoints'):
             writer.writerow([key, value])
  
 
+
+def set_folder_name(args, ii):
+    # setting record of experiments
+    dropout_argument = ("%.2f" % args.dropout).replace(".","p")
+
+    if args.model == "PatchTST":
+        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+        args.model,
+        args.data,
+        args.moving_avg,
+        args.features,
+        args.enc_in, 
+        args.seq_len,
+        args.label_len,
+        args.pred_len,
+        args.patch_len,
+        args.stride,
+        args.d_model,
+        args.n_heads,
+        args.e_layers,
+        args.d_layers,
+        args.d_ff,
+        args.factor,
+        args.embed,
+        args.distil,
+        dropout_argument,
+        args.des, 
+        args.loss, 
+        ii)
+
+    else: 
+        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+        args.model,
+        args.data,
+        args.moving_avg,
+        args.features,
+        args.enc_in, 
+        args.seq_len,
+        args.label_len,
+        args.pred_len,
+        args.d_model,
+        args.n_heads,
+        args.e_layers,
+        args.d_layers,
+        args.d_ff,
+        args.factor,
+        args.embed,
+        args.distil,
+        dropout_argument,
+        args.des, 
+        args.loss, 
+        ii )
+
+    return setting
+
 def get_folder_name(settings): 
 
     dataset    = settings["dataset"]
@@ -156,14 +211,10 @@ def get_folder_name(settings):
     fc    = settings["factor"]  
     time_embeding = settings["time_embeding"]  
     loss = settings["loss"] 
+    dp   = settings["dropout"].replace(".","p")
+ 
 
-    if dropout > 0:
-        is_dropout = "dp"
-        foldername = "%s_%d_%d_%s_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_Exp_%sloss_0"   % (dataset, seq_length, pred_length, is_dropout, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, loss)
-    else:
-        foldername = "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_Exp_%sloss_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, loss)
-    
-    return foldername
+    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_dp%f_Exp_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, dp, loss)
 
 
 def get_folders_list(settings, tuning_param, value_list): 

@@ -6,7 +6,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import pdb 
-
+from utils.tools import set_folder_name
 from datetime import datetime, timedelta
 
 def datetime2str(time_stamp, format="%d-%H:%M"):
@@ -145,55 +145,7 @@ if args.dropout > 0:
     args.model_id = args.model_id + "_dp"
     
 ii = 0 
-if args.model == "PatchTST":
-    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}loss_{}'.format(
-    args.model_id,
-    args.model,
-    args.data,
-    args.moving_avg,
-    args.features,
-    args.enc_in, 
-    args.seq_len,
-    args.label_len,
-    args.pred_len,
-    args.patch_len,
-    args.stride,
-    args.d_model,
-    args.n_heads,
-    args.e_layers,
-    args.d_layers,
-    args.d_ff,
-    args.factor,
-    args.embed,
-    args.distil,
-    args.des, 
-    args.loss, 
-    ii)
-
-else:
-    
-    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}loss_{}'.format(
-    args.model_id,
-    args.model,
-    args.data,
-    args.moving_avg,
-    args.features,
-    args.enc_in, 
-    args.seq_len,
-    args.label_len,
-    args.pred_len,
-    args.d_model,
-    args.n_heads,
-    args.e_layers,
-    args.d_layers,
-    args.d_ff,
-    args.factor,
-    args.embed,
-    args.distil,
-    args.des, 
-    args.loss, 
-    ii)
-
+setting = set_folder_name(args, ii)
 
 exp = Infer_Main(args)  # set experiments 
  
