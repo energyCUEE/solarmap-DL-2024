@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D 
-
+import pdb
 
 SMALL_SIZE = 15
 MEDIUM_SIZE = 15
@@ -25,34 +25,32 @@ def plot_gradients(model, file_path=None):
 def get_gradients(model):
     named_parameters = model.named_parameters()
     layers = []
-    ave_grads = []
+    abs_grads = []
     max_grads = []
-    for n, p in named_parameters:
-        if(p.requires_grad) and ("bias" not in n):
-            layers.append(n)
-            ave_grads.append(p.grad.abs().mean().cpu().numpy())
-            max_grads.append(p.grad.abs().max().cpu().numpy())
+    for name, pp in named_parameters:
+        if(pp.requires_grad) and ("bias" not in name):
+            layers.append(name) 
+            abs_grads.append(pp.grad.abs().cpu().numpy().mean())
+            max_grads.append(pp.grad.abs().cpu().numpy().max())
 
-    return ave_grads, max_grads, layers
+    return abs_grads, max_grads, layers
 
 
 
-def plot_gradient_mean_and_max_for_each_layer(ave_grads, max_grads, layers, file_path):
-    
-    if len(ave_grads) > 8:
-
-        fig_size_width = int(15 * len(ave_grads)/8)
-
+def plot_gradient_mean_and_max_for_each_layer(abs_grads, max_grads, layers, file_path):
+ 
+    if len(abs_grads) > 8: 
+        fig_size_width = int(15 * len(abs_grads)/8) 
     else:
         fig_size_width = 15
 
     fig = plt.figure(figsize=(fig_size_width, 8))  
-    fig.subplots_adjust(bottom=0.2)
+    fig.subplots_adjust(bottom=0.2) 
     plt.plot(np.arange(len(max_grads)), max_grads, alpha=0.5, lw=1, color="r")
-    plt.plot(np.arange(len(ave_grads)), ave_grads, alpha=0.5, lw=1, color="b") 
-    plt.hlines(0, 0, len(ave_grads)+1, lw=2, color="k" )
-    plt.xticks(range(0,len(ave_grads), 1), layers, rotation=30, ha="right" )
-    plt.xlim(left=0, right=len(ave_grads)-1)
+    plt.plot(np.arange(len(abs_grads)), abs_grads, alpha=0.5, lw=1, color="b") 
+    plt.hlines(0, 0, len(abs_grads)+1, lw=2, color="k" )
+    plt.xticks(range(0,len(abs_grads), 1), layers, rotation=30, ha="right" )
+    plt.xlim(left=0, right=len(abs_grads)-1)
     plt.ylim(bottom = -0.001, top=0.05) # zoom in on the lower gradient regions 
     plt.ylabel("average gradient") 
     plt.grid(True)

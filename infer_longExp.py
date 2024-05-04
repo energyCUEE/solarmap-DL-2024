@@ -110,12 +110,13 @@ parser.add_argument('--do_predict', action='store_true', help='whether to predic
 # optimization
 parser.add_argument('--num_workers',   type=int, default=10, help='data loader num workers')
 parser.add_argument('--itr',           type=int, default=2, help='experiments times')
-parser.add_argument('--train_epochs',  type=int, default=10, help='train epochs')
+parser.add_argument('--train_epochs',  type=int, default=100, help='train epochs')
 parser.add_argument('--batch_size',    type=int, default=128, help='batch size of train input data')
-parser.add_argument('--patience',      type=int, default=100, help='early stopping patience')
-parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate')
+parser.add_argument('--patience',      type=int, default=5, help='early stopping patience')
+parser.add_argument('--learning_rate', type=float, default=0.001, help='optimizer learning rate')
 parser.add_argument('--des',        type=str, default='test', help='exp description')
 parser.add_argument('--loss',       type=str, default='mse', help='loss function')
+parser.add_argument('--scheduler',   type=str, default='OneCycleLR', help='adjust learning rate')
 parser.add_argument('--lradj',      type=str, default='type3', help='adjust learning rate')
 parser.add_argument('--pct_start',  type=float, default=0.3, help='pct_start')
 parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
@@ -139,51 +140,59 @@ if args.use_gpu and args.use_multi_gpu:
 
 print('Args in experiment:')
 print(args)
- 
 
-ii = 0
+if args.dropout > 0:
+    args.model_id = args.model_id + "_dp"
+    
+ii = 0 
 if args.model == "PatchTST":
-    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
-        args.model_id,
-        args.model,
-        args.data,
-        args.moving_avg,
-        args.features,
-        args.enc_in,
-        args.seq_len,
-        args.label_len,
-        args.pred_len,
-        args.patch_len,
-        args.stride,
-        args.d_model,
-        args.n_heads,
-        args.e_layers,
-        args.d_layers,
-        args.d_ff,
-        args.factor,
-        args.embed,
-        args.distil,
-        args.des, ii)
-else:
+    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}loss_{}'.format(
+    args.model_id,
+    args.model,
+    args.data,
+    args.moving_avg,
+    args.features,
+    args.enc_in, 
+    args.seq_len,
+    args.label_len,
+    args.pred_len,
+    args.patch_len,
+    args.stride,
+    args.d_model,
+    args.n_heads,
+    args.e_layers,
+    args.d_layers,
+    args.d_ff,
+    args.factor,
+    args.embed,
+    args.distil,
+    args.des, 
+    args.loss, 
+    ii)
 
-    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(args.model_id,
-        args.model,
-        args.data,
-        args.moving_avg,
-        args.features,
-        args.enc_in,
-        args.seq_len,
-        args.label_len,
-        args.pred_len,
-        args.d_model,
-        args.n_heads,
-        args.e_layers,
-        args.d_layers,
-        args.d_ff,
-        args.factor,
-        args.embed,
-        args.distil,
-        args.des, ii) 
+else:
+    
+    setting = '{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}loss_{}'.format(
+    args.model_id,
+    args.model,
+    args.data,
+    args.moving_avg,
+    args.features,
+    args.enc_in, 
+    args.seq_len,
+    args.label_len,
+    args.pred_len,
+    args.d_model,
+    args.n_heads,
+    args.e_layers,
+    args.d_layers,
+    args.d_ff,
+    args.factor,
+    args.embed,
+    args.distil,
+    args.des, 
+    args.loss, 
+    ii)
 
 
 exp = Infer_Main(args)  # set experiments 

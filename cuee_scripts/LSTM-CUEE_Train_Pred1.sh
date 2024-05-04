@@ -20,8 +20,9 @@ num_features=11
 
 model_name=RLSTM 
 d_model=50
+e_layer=1
 
-for e_layer in 2 5 10
+for e_layer in 1 2 5 10 15 20
 do 
 python -u run_longExp.py \
     --is_training 1 \
@@ -43,9 +44,11 @@ python -u run_longExp.py \
     --enc_in $num_features \
     --dec_in $num_features \
     --c_out  $num_features \
+    --dropout 0.1\
     --des 'Exp' \
     --loss 'l1' \
     --scheduler 'ReduceLROnPlateau' \
+    --train_epochs 100 \
     --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done
  

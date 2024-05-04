@@ -23,6 +23,16 @@ def npdatetime_to_string(numpy_array):
     list_str = np.datetime_as_string(numpy_array, unit='s').tolist()
     return list_str 
 
+def choose_date(df_stamp, start_date='2022-04-02'):
+    mask = (df_stamp['date']  >=  start_date)
+    filtered_data_df = df_stamp.loc[mask]  
+    return filtered_data_df
+
+def choose_datetime(df_stamp, start_time, end_time):
+    mask = (df_stamp['Datetime'].dt.time >= pd.Timestamp(start_time).time()) & (df_stamp['Datetime'].dt.time <= pd.Timestamp(end_time).time())
+    filtered_data_df = df_stamp.loc[mask] 
+    return filtered_data_df
+
 def choose_daytimehours(data, start=1, end=9):  
     daytimehours  = [ True if (hour <=end) and (hour >= start)  else False for hour in data["hour"] ]
     data_ = data.iloc[daytimehours].copy()
@@ -95,12 +105,12 @@ class DatasetCUEE(data.Dataset):
         train_data     = pd.read_csv(os.path.join(self.root_path, self.train_data_path) ) 
         read_data      = pd.read_csv(os.path.join(self.root_path, self.data_path) ) 
  
-        raw_train_data = train_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'temperature', 'I_nwp']].copy() 
-        raw_train_data['Datetime']     = pd.to_datetime(raw_train_data['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
-        raw_train_data["hour"]         = [ date.hour   for date in raw_train_data['Datetime'] ]
-        raw_train_data['day']          = [ date.day    for date in raw_train_data['Datetime'] ]
-        raw_train_data['month']        = [ date.month  for date in raw_train_data['Datetime'] ]
-        raw_train_data['minute']       = [ date.minute for date in raw_train_data['Datetime'] ]
+        df_train_raw = train_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'temperature', 'I_nwp']].copy() 
+        df_train_raw['Datetime']     = pd.to_datetime(df_train_raw['Datetime'], utc=True) # Should be false If False == Thailand Local Time (Guessing)
+        df_train_raw["hour"]         = [ date.hour   for date in df_train_raw['Datetime'] ]
+        df_train_raw['day']          = [ date.day    for date in df_train_raw['Datetime'] ]
+        df_train_raw['month']        = [ date.month  for date in df_train_raw['Datetime'] ]
+        df_train_raw['minute']       = [ date.minute for date in df_train_raw['Datetime'] ]
 
         #'updated_measurement_Iclr_new.csv'   
         raw_data       =  read_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'temperature', 'I_nwp']].copy()  
@@ -114,72 +124,65 @@ class DatasetCUEE(data.Dataset):
 
         print("Flag %s => Total: %d" % (self.flag, len(read_data)))
         print("... filtering out night time and concatenating data from each station")
-        df_raw_train  = choose_daytimehours(raw_train_data, start=1, end=9)   
-        df_raw_time   = choose_daytimehours(raw_data, start=1, end=9) 
         
-        data_x_list = []
-        data_v_list = []
-        data_y_list = []
-        data_stamp_list = []
+        # Because the data set starts from 7:30 AM and ends at 5:00 PM (Thailand local time), 
+        # therefore, we can comment out the following lines: 
+        start_time = '00:00:00'
+        end_time   = '10:00:00'
+        start_date = '2022-04-02' 
 
-        for station_num in self.stations_list: 
+        df_train_raw['date'] = pd.to_datetime(df_train_raw['Datetime'], format='%Y-%m-%d')
+        raw_data['date']     = pd.to_datetime(raw_data['Datetime'], format='%Y-%m-%d')
 
-            df_train_raw     = choose_stations(df_raw_train, station_num_list=[station_num])   
-            df_raw           = choose_stations(df_raw_time, station_num_list=[station_num])  
- 
+        df_train_raw  = choose_date(df_train_raw, start_date=start_date )   
+        raw_data      = choose_date(raw_data, start_date=start_date )
+
+        df_raw_train  = choose_datetime(df_train_raw, start_time=start_time, end_time=end_time)   
+        df_raw        = choose_datetime(raw_data, start_time=start_time, end_time=end_time)    
+
+        # scaling  
+        train_data_x = df_raw_train[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'temperature', 'I_nwp'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
+        train_data_v = df_raw_train[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
+        train_data_y = df_raw_train[[self.target]]  
+         
+        # The last attribute is also a target attribute ...  
+        # cols_data  = df_raw.columns[1:]   
+        df_data_x    = df_raw[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'temperature', 'I_nwp'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
+        df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
+        df_data_y    = df_raw[[self.target]]   
             
-            # The last attribute is also a target attribute ...  
-            # cols_data  = df_raw.columns[1:]   
-            df_data_x    = df_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month',  'minute'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
-            df_data_y    = df_raw[[self.target]]  
 
-            # scaling  
-            train_data_x = df_train_raw[['CI', 'R', 'temperature', 'I_nwp', 'hour_encode1', 'Iclr', 'latt', 'long', 'day', 'month', 'minute'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            train_data_v = df_train_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
-            train_data_y = df_train_raw[[self.target]]  
-             
- 
-            self.scaler_x.fit(train_data_x.values) 
-            data_x = self.scaler_x.transform(df_data_x.values)
- 
-            self.scaler_v.fit(train_data_v.values) 
-            data_v = self.scaler_v.transform(df_data_v.values)
- 
-            self.scaler_y.fit(train_data_y.values.reshape(-1,1)) 
-            data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1)) 
- 
-            # time stamp 
-            df_stamp = df_raw.loc[:,['Datetime']]  
-            df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)   
+        self.scaler_x.fit(train_data_x.values) 
+        data_x = self.scaler_x.transform(df_data_x.values)
 
-            if self.timeenc == 0:
-                df_stamp['month']   = df_stamp.Datetime.apply(lambda row: row.month, 1)
-                df_stamp['day']     = df_stamp.Datetime.apply(lambda row: row.day, 1)
-                df_stamp['weekday'] = df_stamp.Datetime.apply(lambda row: row.weekday(), 1)
-                df_stamp['hour']    = df_stamp.Datetime.apply(lambda row: row.hour, 1)  
-                df_stamp['min']     = df_stamp.Datetime.apply(lambda row: row.minute, 1)   
+        self.scaler_v.fit(train_data_v.values) 
+        data_v = self.scaler_v.transform(df_data_v.values)
 
-                self.date_time      = npdatetime_to_string(df_stamp['Datetime'].values.copy())  
-                data_stamp          = df_stamp.drop(['Datetime'],  axis=1).values 
-                
-            elif self.timeenc == 1:
-                data_stamp = time_features(pd.to_datetime(df_stamp['Datetime'].values), freq=self.freq)
-                data_stamp = data_stamp.transpose(1, 0)
+        self.scaler_y.fit(train_data_y.values.reshape(-1,1)) 
+        data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1)) 
 
-            # putting them into x and y    
-            data_x_list.append(data_x)  # data[border1:border2, -1] data[border1:border2]
-            data_v_list.append(data_v) 
-            data_y_list.append(data_y.reshape(-1,1))  # data[border1:border2,-1].reshape(-1,1)   data[border1:border2]
+        # time stamp 
+        df_stamp = df_raw.loc[:,['Datetime']]  
+        df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)   
+
+        if self.timeenc == 0:
+            df_stamp['month']   = df_stamp.Datetime.apply(lambda row: row.month, 1)
+            df_stamp['day']     = df_stamp.Datetime.apply(lambda row: row.day, 1)
+            df_stamp['weekday'] = df_stamp.Datetime.apply(lambda row: row.weekday(), 1)
+            df_stamp['hour']    = df_stamp.Datetime.apply(lambda row: row.hour, 1)  
+            df_stamp['min']     = df_stamp.Datetime.apply(lambda row: row.minute, 1)    
+            data_stamp          = df_stamp.drop(['Datetime'],  axis=1).values 
             
- 
-            data_stamp_list.append(data_stamp) 
- 
-        self.data_x = np.concatenate(data_x_list) 
-        self.data_y = np.concatenate(data_y_list)  
+        elif self.timeenc == 1:
+            data_stamp = time_features(pd.to_datetime(df_stamp['Datetime'].values), freq=self.freq)
+            data_stamp = data_stamp.transpose(1, 0) 
 
-        self.data_v = np.concatenate(data_v_list) 
-        self.data_stamp = np.concatenate(data_stamp_list)  
+ 
+        self.data_x = data_x
+        self.data_y = data_y
+        self.data_v = data_v
+        self.data_stamp = data_stamp 
+        self.date_time  = npdatetime_to_string(df_stamp['Datetime'].values.copy())   
 
     def __getitem__(self, index):
 
@@ -200,12 +203,14 @@ class DatasetCUEE(data.Dataset):
         else:
             seq_v = self.data_v[ov_begin:ov_end] 
 
+        # date_time_x = self.date_time[s_begin:s_end]
+        # date_time_y = self.date_time[r_begin:r_end]
 
         seq_x_mark = self.data_stamp[s_begin:s_end] 
         seq_v_mark = self.data_stamp[ov_begin:ov_end] 
         seq_y_mark = self.data_stamp[r_begin:r_end] 
 
-        return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark
+        return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark 
 
     def __len__(self): 
         return len(self.data_x) - self.seq_len - self.pred_len + 1

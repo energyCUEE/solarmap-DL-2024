@@ -97,10 +97,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # random seed
-    # fix_seed = args.random_seed
-    # random.seed(fix_seed)
-    # torch.manual_seed(fix_seed)
-    # np.random.seed(fix_seed)
+    fix_seed = args.random_seed
+    random.seed(fix_seed)
+    torch.manual_seed(fix_seed)
+    np.random.seed(fix_seed)
      
     args.use_gpu = True if torch.cuda.is_available() and args.use_gpu else False
 
@@ -116,8 +116,9 @@ if __name__ == '__main__':
 
     Exp = Exp_Main
 
-    
-
+    if args.dropout > 0:
+        args.model_id = args.model_id + "_dp"
+ 
     if args.is_training:
         for ii in range(args.itr):
             # setting record of experiments

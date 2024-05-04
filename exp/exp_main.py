@@ -134,9 +134,7 @@ class Exp_Main(Exp_Basic):
             os.makedirs(path)
 
         save_settings_dict(self.args, setting, self.num_params) 
-
-        time_now = time.time()
-
+  
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
 
@@ -148,7 +146,7 @@ class Exp_Main(Exp_Basic):
 
         if self.args.scheduler == "ReduceLROnPlateau":
             scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim,
-                                                mode='min', factor=0.5, patience=1, verbose=True ) 
+                                                mode='min', factor=0.5, patience=3, verbose=True ) 
         else:    
             scheduler = lr_scheduler.OneCycleLR(optimizer = model_optim,
                                                 steps_per_epoch = train_steps,
@@ -165,8 +163,7 @@ class Exp_Main(Exp_Basic):
             train_loss = []
             train_MAE  = []
 
-            self.model.train()
-            epoch_time = time.time()
+            self.model.train() 
 
             for i, (batch_x, batch_y,  batch_v, batch_x_mark, batch_y_mark,  batch_v_mark) in enumerate(train_loader):  ###### <<<<
             
@@ -217,13 +214,7 @@ class Exp_Main(Exp_Basic):
 
                 if (i + 1) % 100 == 0:
 
-                    print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
-                    speed = (time.time() - time_now) / iter_count
-                    left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
-                    
-                    print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
-                    iter_count = 0
-                    time_now = time.time()
+                    print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item())) 
 
                 if self.args.use_amp:
                     scaler.scale(loss).backward()
@@ -238,12 +229,9 @@ class Exp_Main(Exp_Basic):
                     if self.args.lradj == 'TST':
                         adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                         scheduler.step()
-                    
-                
              
             plot_gradients(self.model,os.path.join(path, 'gradflow-@-ep-%03d.png' % epoch)) 
             
-            print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
             train_MAE  = np.average(train_MAE)
 
@@ -332,8 +320,8 @@ class Exp_Main(Exp_Basic):
                 outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
                 batch_y = batch_y.to(self.device)
                 
-                outputs = outputs.detach().cpu().numpy()
-                batch_y = batch_y.detach().cpu().numpy()
+                outputs = outputs.cpu().numpy()
+                batch_y = batch_y.cpu().numpy()
 
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()

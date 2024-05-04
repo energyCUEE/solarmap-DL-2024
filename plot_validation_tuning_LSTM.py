@@ -18,11 +18,12 @@ settings = {}
 settings["dataset"]        = "CUEE_PMAPS"
 settings["seq_length"]     =  4
 settings["pred_length"]    =  1
+settings["dropout"]        = 0.1
 settings["network"]        = "RLSTM" 
 
 settings["feature_mode"]   = "MS"
 settings["moving_average"] =  4 
-settings["enc_in"]         =  12 
+settings["enc_in"]         =  11 
 settings["label_len"]      =  0
 settings["n_heads"]        =  8
 settings["d_model"]        =  50 
@@ -31,19 +32,20 @@ settings["d_ff"]           =  2048
 settings["e_layers"]       =  2 
 settings["factor"]         =  1
 settings["time_embeding"]  = "F"
+settings["loss"]  = "l1"
  
 
 meaning_param = {}
-meaning_param["dm"] = "#Hidden" 
-meaning_param["el"] = "#LSMTCell" 
+meaning_param["d_model"] = "#Hidden" 
+meaning_param["e_layers"] = "#LSMTCell" 
 
 # tuning_param    = "dm"
 # settings[tuning_param] =  None 
 # value_list             = [8, 16, 32] 
 
-tuning_param    = "el"
+tuning_param    = "e_layers"
 settings[tuning_param] =  None 
-value_list             = [1, 2, 10, 25, 50] 
+value_list             = [1, 2, 5, 10, 15, 20] 
 
 
      
@@ -55,7 +57,7 @@ n_param = []
 overall_mae_list = []
 overall_mse_list = []
 
-for folder_ in folder_list:
+for folder_, value_ in zip(folder_list, value_list):
     setting_path_csv       = os.path.join(checkpoint_folder_path, folder_, "model_setting.csv")
     result_stat_path_csv   = os.path.join(val_folder_path, folder_, "stats.csv")
     
@@ -70,9 +72,11 @@ for folder_ in folder_list:
 
     el_list.append(int(d_dict["e_layers"])) 
     d_model.append(int(d_dict["d_model"]))
-    n_param.append(int(d_dict["Num-param"]))
+    n_param.append(int(d_dict["Num-param"])) 
     overall_mae_list.append(float(stat_dict["mae-overall"]))
     overall_mse_list.append(float(stat_dict["mse-overall"]))
+
+    print("%s @ %s [%.1f] MAE %f" % (folder_, tuning_param, value_, float(stat_dict["mae-overall"])) )
 
     
 

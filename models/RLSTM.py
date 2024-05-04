@@ -18,8 +18,7 @@ class Model(nn.Module):
         self.hidden_units = configs.d_model
         self.num_layers   = configs.e_layers
         self.forecast_steps = configs.pred_len  # Number of forecast steps
-        self.num_features_out = configs.enc_in 
-        
+        self.num_features_out = configs.enc_in  
         
         # Initial LSTM layer (multi-layer)
         self.lstm = nn.LSTM(
@@ -32,7 +31,13 @@ class Model(nn.Module):
 
         # Output layer for multi-step forecasting 
         self.activation = nn.ReLU()
-        self.fc = nn.Linear(in_features=self.hidden_units, out_features=self.forecast_steps)
+ 
+        if configs.dropout > 0.0:  
+            self.enable_dropout = True
+            self.dropout    = nn.Dropout(p=configs.dropout, inplace=False)
+        else:
+            self.enable_dropout = False
+        self.fc         = nn.Linear(in_features=self.hidden_units, out_features=self.forecast_steps)
 
     def forward(self, x):
         '''
@@ -56,9 +61,12 @@ class Model(nn.Module):
         output = self.activation(output)
  
         # Dropout layer for regularization
-        #out = nn.Dropout(p=0.2)(out)
+        if self.enable_dropout:
+            output = self.dropout(output)
+
         output = self.fc(output[:, -1, :])
-        return output.reshape([batch_size, self.forecast_steps, 1])
+        
+        return output
     
 
 

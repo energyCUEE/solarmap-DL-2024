@@ -10,7 +10,7 @@ fi
 pred_len=1
 label_len=0  
 moving_avg=4
-batch_size=64
+batch_size=32
 seq_len=4
 target=I
 
@@ -21,13 +21,10 @@ num_features=11
 
 model_name=RLSTM 
 mode=val # test val 
-d_model=50
-e_layer=2
+d_model=50 
 
-for e_layer in 1 2 10 25 50
-do
-# for d_model in 8 16 32
-# do
+for e_layer in 1 2 5 10 15 20
+do  
 python -u infer_longExp.py \
     --mode $mode \
     --root_path ./dataset/CUEE_PMAPS/ \
@@ -38,16 +35,20 @@ python -u infer_longExp.py \
     --model $model_name \
     --moving_avg $moving_avg \
     --data CUEE_PMAPS \
-    --features $feature_type \
-    --target $target \
-    --seq_len $seq_len \
+    --features  $feature_type \
+    --target    $target \
+    --seq_len   $seq_len \
     --label_len $label_len\
     --pred_len $pred_len \
-    --d_model $d_model \
+    --d_model  $d_model \
     --e_layers $e_layer \
     --enc_in $num_features \
     --dec_in $num_features \
     --c_out  $num_features \
+    --dropout 0.1\
     --des 'Exp' \
-    --batch_size $batch_size --learning_rate 0.0001 --itr 1  
+    --loss 'l1' \
+    --scheduler 'ReduceLROnPlateau' \
+    --train_epochs 100 \
+    --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done

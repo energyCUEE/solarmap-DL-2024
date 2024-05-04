@@ -141,6 +141,7 @@ def get_folder_name(settings):
     dataset    = settings["dataset"]
     seq_length = settings["seq_length"]
     pred_length = settings["pred_length"]
+    dropout = settings["dropout"]
     model_name  = settings["network"] 
     dataset     = settings["dataset"] 
     moving_average = settings["moving_average"] 
@@ -156,7 +157,13 @@ def get_folder_name(settings):
     time_embeding = settings["time_embeding"]  
     loss = settings["loss"] 
 
-    return "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_Exp_%sloss_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, loss)
+    if dropout > 0:
+        is_dropout = "dp"
+        foldername = "%s_%d_%d_%s_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_Exp_%sloss_0"   % (dataset, seq_length, pred_length, is_dropout, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, loss)
+    else:
+        foldername = "%s_%d_%d_%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_Exp_%sloss_0"   % (dataset, seq_length, pred_length, model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, loss)
+    
+    return foldername
 
 
 def get_folders_list(settings, tuning_param, value_list): 

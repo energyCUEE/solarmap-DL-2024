@@ -1,5 +1,5 @@
 from data_provider.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, Dataset_Pred
-from data_provider.dataloader_regression_CUEE import  DatasetCUEE 
+from data_provider.dataloader_regression_CUEE_per_day import  DatasetCUEE 
 from torch.utils.data import DataLoader
 import pdb
 
@@ -10,6 +10,7 @@ data_dict = {
     'ETTm2': Dataset_ETT_minute,
     'custom': Dataset_Custom, 
     'CUEE_PMAPS':  DatasetCUEE,
+    'CUEE_PMAPS_NIGHT':  DatasetCUEE,
 }
 
 
@@ -18,7 +19,7 @@ def data_provider(args, flag):
     timeenc = 0 if args.embed != 'timeF' else 1
     train_only = args.train_only
 
-    if (flag == 'test') or (flag == 'val'):
+    if (flag == 'test'):
         shuffle_flag = False
         drop_last = False
         batch_size = args.batch_size
@@ -31,7 +32,7 @@ def data_provider(args, flag):
         args.batch_size = 1
         freq = args.freq 
 
-    elif flag == 'train':
+    elif flag == 'train'  or (flag == 'val'):
 
         shuffle_flag = True
         drop_last = True
@@ -42,7 +43,7 @@ def data_provider(args, flag):
         print("flag can only be set to one of these: 'test' / 'val' / 'pred' / 'train'")
         KeyError
 
-    if args.data == "CUEE_PMAPS":
+    if (args.data == "CUEE_PMAPS") or (args.data == "CUEE_PMAPS_NIGHT"):
   
         data_set = Data(
             root_path=args.root_path,
@@ -55,7 +56,8 @@ def data_provider(args, flag):
             target=args.target,
             timeenc=timeenc,
             freq=freq,
-            train_only=train_only
+            train_only=train_only,
+            tag=args.data
         ) 
 
     else:
