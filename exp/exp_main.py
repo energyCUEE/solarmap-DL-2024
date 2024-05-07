@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from utils.tools import save_settings_dict
 from utils.learning_tools import plot_gradients
-
+from tqdm import tqdm
 warnings.filterwarnings('ignore')
 
 class Exp_Main(Exp_Basic):
@@ -157,6 +157,7 @@ class Exp_Main(Exp_Basic):
  
 
         stat_ep_list = []
+        
         for epoch in range(self.args.train_epochs):
             
             iter_count = 0
@@ -165,7 +166,8 @@ class Exp_Main(Exp_Basic):
 
             self.model.train() 
 
-            for i, (batch_x, batch_y,  batch_v, batch_x_mark, batch_y_mark,  batch_v_mark) in enumerate(train_loader):  ###### <<<<
+            pbar = tqdm(train_loader)
+            for i, (batch_x, batch_y,  batch_v, batch_x_mark, batch_y_mark,  batch_v_mark) in enumerate(pbar):  ###### <<<<
             
                 iter_count += 1
                 model_optim.zero_grad()
@@ -210,25 +212,18 @@ class Exp_Main(Exp_Basic):
                 target_rev_scale = train_data.inverse_transform_y(batch_y.view(-1,1).detach().cpu().numpy())
                  
                 train_mae  = MAE(output_rev_scale, target_rev_scale) 
-                train_MAE.append(train_mae)
+                train_MAE.append(train_mae) 
 
-                if (i + 1) % 100 == 0:
-
-                    print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item())) 
-
-                if self.args.use_amp:
-                    scaler.scale(loss).backward()
-                    scaler.step(model_optim)
-                    scaler.update()
-                else:
-                    loss.backward()
-                    model_optim.step()
+                loss.backward()
+                model_optim.step()
                     
                 if self.args.scheduler != "ReduceLROnPlateau":
                     
                     if self.args.lradj == 'TST':
                         adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                         scheduler.step()
+
+                pbar.set_description("iters: {0}, epoch: {1} | loss: {2:.7f}".format(i, epoch, loss.item())) 
              
             plot_gradients(self.model,os.path.join(path, 'gradflow-@-ep-%03d.png' % epoch)) 
             

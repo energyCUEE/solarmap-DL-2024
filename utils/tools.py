@@ -225,3 +225,40 @@ def get_folders_list(settings, tuning_param, value_list):
         folder_list.append(folder_name_) 
         print("[%d]: %s" % (index_, folder_name_) ) 
     return folder_list
+
+
+def plot_axis(ax, y, ref_y=None, ylabel=None, title=None):
+
+    ax.plot(y, '-', color='red', alpha=0.99, linewidth=2.0) 
+    if ref_y is not None:
+        ax.plot(ref_y, '--', color='blue', alpha=0.99, linewidth=2.0) 
+    
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
+    
+    if title is not None:
+        ax.set_title(title)
+
+    # Major ticks every 20, minor ticks every 5
+    major_ticks = np.arange(0, len(y), 37)
+    minor_ticks = np.arange(0, len(y), 4)
+
+    ax.set_xticks(major_ticks)
+    ax.set_xticks(minor_ticks, minor=True) 
+
+    ax.grid(which='both')
+    
+    ax.grid(which='minor', alpha=0.2)
+    ax.grid(which='major', alpha=0.8) 
+
+def plotting_seasonal_data(y, ref_y=None, filename=None, title=None): 
+    fig, axs = plt.subplots(4, 1, figsize=(12, 10))
+    plot_axis(axs[0], y.observed, ref_y=ref_y, ylabel="Observation", title=title)
+    plot_axis(axs[1], y.trend, ylabel="Trend")
+    plot_axis(axs[2], y.seasonal, ylabel="Seasonal")
+    plot_axis(axs[3], y.resid, ylabel="Residual") 
+    
+    plt.tight_layout()
+    if filename is not None:
+        plt.savefig(filename)
+    plt.show()

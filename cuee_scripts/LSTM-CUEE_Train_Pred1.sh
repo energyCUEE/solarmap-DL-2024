@@ -9,7 +9,7 @@ fi
 pred_len=1
 label_len=0  
 moving_avg=4
-batch_size=32
+batch_size=64
 seq_len=4
 target=I
 
@@ -22,7 +22,7 @@ model_name=RLSTM
 d_model=50
 e_layer=5
 
-for d_model in 16 32 64 128 256
+for d_model in 16
 do 
 python -u run_longExp.py \
     --is_training 1 \
@@ -48,7 +48,7 @@ python -u run_longExp.py \
     --des 'Exp' \
     --loss 'l1' \
     --scheduler 'ReduceLROnPlateau' \
-    --train_epochs 100 \
+    --train_epochs 10 \
     --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done
  

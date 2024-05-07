@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 import os
 from utils.timefeatures import time_features
 import pickle
+import h5py
 
 CUEE_ROOT = os.path.join(os.getcwd(),'data')
 CUEE_DATA = 'updated_measurement_Iclr_new.csv'
@@ -20,7 +21,7 @@ PMAS_CUEE_TEST  = "pmaps_test_data.csv"
 PMAS_CUEE_VALID = "pmaps_validate_data.csv"
 PMAS_CUEE_TRAIN = "pmaps_train_data.csv"
 
-SUFFIX_SAVED_FILES_LIST = ["-seq_x_list.npy", "-seq_y_list.npy", "-seq_v_list.npy", "-seq_x_mark_list.npy", "-seq_y_mark_list.npy", "-seq_v_mark_list.npy", "-date_time_x_list.npy", "-date_time_y_list.npy"]
+SUFFIX_SAVED_FILES_LIST = ["data.h5", "date_time_x_list.npy", "date_time_y_list.npy"]
 
 def npdatetime_to_string(numpy_array):   
     list_str = np.datetime_as_string(numpy_array, unit='s').tolist()
@@ -137,7 +138,8 @@ class DatasetCUEE(data.Dataset):
             # therefore, we can comment out the following lines:  
 
             start_date = '2022-04-02' 
-            filename = os.path.join(self.root_path, "%s-%s-%s-%s" % (self.flag, start_date, start_time, end_time))
+            self.folder = os.path.join(self.root_path, "%s-%s-%s-%s" % (self.flag, start_date, start_time, end_time))
+            os.makedirs(self.folder, exist_ok=True)
             
             df_train_raw['date'] = pd.to_datetime(df_train_raw['Datetime'], format='%Y-%m-%d')
             raw_data['date']     = pd.to_datetime(raw_data['Datetime'], format='%Y-%m-%d')
@@ -190,8 +192,9 @@ class DatasetCUEE(data.Dataset):
             # therefore, we can comment out the following lines: 
  
             start_date = '2022-04-02' 
-            filename = os.path.join(self.root_path, "Night-%s-%s-%s-%s" % (self.flag, start_date, start_time, end_time))
-             
+            self.folder = os.path.join(self.root_path, "%s-%s-%s-%s" % (self.flag, start_date, start_time, end_time))
+            os.makedirs(self.folder, exist_ok=True)
+
             df_train_raw['date'] = pd.to_datetime(df_train_raw['Datetime'], format='%Y-%m-%d')
             raw_data['date']     = pd.to_datetime(raw_data['Datetime'], format='%Y-%m-%d')
 
@@ -226,18 +229,16 @@ class DatasetCUEE(data.Dataset):
 
         self.scaler_y.fit(train_data_y.values.reshape(-1,1)) 
         data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1)) 
- 
-        
-        isfiles_list = []
-        for file_suffix in SUFFIX_SAVED_FILES_LIST:
-            isfiles_list.append(os.path.isfile(filename + file_suffix))
   
 
+        isfiles_list = []
+        for file_suffix in SUFFIX_SAVED_FILES_LIST:
+            isfiles_list.append(os.path.isfile( os.path.join(self.folder, file_suffix) )) 
+ 
         if all(isfiles_list)  == True: 
-            self.__read_file_to_list(filename)
-
+            self.__read_file_to_list()
+        
         else:
-
             # time stamp 
             df_stamp = df_raw.loc[:,['Datetime', 'site_name']]  
             df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)   
@@ -258,80 +259,47 @@ class DatasetCUEE(data.Dataset):
             df_stamp['date'] = pd.to_datetime(df_stamp['Datetime']).dt.date 
 
             self.__stacked_to_daily_seq(data_x, data_y, data_v, data_stamp, df_stamp)
- 
-            self.__save_list_to_file(filename) 
 
-    def __read_file_to_list(self, filename):
+            self.__save_list_to_file() 
 
-        print("Read %s" % (filename + "-seq_x_list.npy"))  
-        with open(filename + "-seq_x_list.npy", 'rb') as fp:
-            self.seq_x_list = pickle.load(fp)
 
-        print("Read %s" % (filename + "-seq_y_list.npy"))  
-        with open(filename + "-seq_y_list.npy", 'rb') as fp:
-            self.seq_y_list = pickle.load(fp) 
 
-        print("Read %s" % (filename + "-seq_v_list.npy"))  
-        with open(filename + "-seq_v_list.npy", 'rb') as fp:
-            self.seq_v_list = pickle.load(fp)
+    def __read_file_to_list(self):
 
-        print("Read %s" % (filename + "-seq_x_mark_list.npy"))  
-        with open(filename + "-seq_x_mark_list.npy", 'rb') as fp:
-            self.seq_x_mark_list = pickle.load(fp)
+        print("Read %s" % os.path.join(self.folder , 'data.h5') )
+        self.h5file = h5py.File(os.path.join(self.folder , 'data.h5'), 'r')
         
-        print("Read %s" % (filename + "-seq_v_mark_list.npy"))  
-        with open(filename + "-seq_v_mark_list.npy", 'rb') as fp:
-            self.seq_v_mark_list = pickle.load(fp)
-
-        print("Read %s" % (filename + "-seq_y_mark_list.npy"))  
-        with open(filename + "-seq_y_mark_list.npy", 'rb') as fp:
-            self.seq_y_mark_list = pickle.load(fp)
-
-        print("Read %s" % (filename + "-date_time_x_list.npy")) 
-        with open(filename + "-date_time_x_list.npy", 'rb') as fp:
+        print("Read %s" % os.path.join(self.folder , "date_time_x_list.npy")) 
+        with open(os.path.join(self.folder , "date_time_x_list.npy"), 'rb') as fp:
             self.date_time_x_list  = pickle.load(fp)
 
-        print("Read %s" % (filename + "-date_time_y_list.npy")) 
-        with open(filename + "-date_time_y_list.npy", 'rb') as fp:
+        print("Read %s" % os.path.join(self.folder , "date_time_y_list.npy")) 
+        with open(os.path.join(self.folder , "date_time_y_list.npy"), 'rb') as fp:
             self.date_time_y_list  = pickle.load(fp) 
 
 
-    def __save_list_to_file(self, filename): 
+    def __save_list_to_file(self): 
+
+        
+        with h5py.File( os.path.join(self.folder , 'data.h5'),'w') as h5f:
+
+            h5f.create_dataset("seq_x", data=np.asarray(self.seq_x_list) )
+            h5f.create_dataset("seq_y", data=np.asarray(self.seq_y_list) )
+            h5f.create_dataset("seq_v", data=np.asarray(self.seq_v_list) ) 
+
+            h5f.create_dataset("seq_x_mark", data=np.asarray(self.seq_x_mark_list) )
+            h5f.create_dataset("seq_y_mark", data=np.asarray(self.seq_y_mark_list) )
+            h5f.create_dataset("seq_v_mark", data=np.asarray(self.seq_v_mark_list) )  
 
 
-        print("save %s" % (filename + "-seq_x_list.npy")) 
-        with open(filename + "-seq_x_list.npy", 'wb') as fp:
-            pickle.dump(self.seq_x_list, fp)
-
-        print("save %s" % (filename + "-seq_y_list.npy")) 
-        with open(filename + "-seq_y_list.npy", 'wb') as fp:
-            pickle.dump(self.seq_y_list, fp)
-
-        print("save %s" % (filename + "-seq_v_list.npy")) 
-        with open(filename + "-seq_v_list.npy", 'wb') as fp:
-            pickle.dump(self.seq_v_list, fp) 
-
-        print("save %s" % (filename + "-seq_x_mark_list.npy")) 
-        with open(filename + "-seq_x_mark_list.npy", 'wb') as fp:
-            pickle.dump(self.seq_x_mark_list, fp) 
-
-
-        print("save %s" % (filename + "-seq_v_mark_list.npy")) 
-        with open(filename + "-seq_v_mark_list.npy", 'wb') as fp:
-            pickle.dump(self.seq_v_mark_list, fp) 
-
-        print("save %s" % (filename + "-seq_y_mark_list.npy")) 
-        with open(filename + "-seq_y_mark_list.npy", 'wb') as fp:
-            pickle.dump(self.seq_y_mark_list, fp) 
-
-        print("save %s" % (filename + "-date_time_x_list.npy"))         
-        with open(filename + "-date_time_x_list.npy", 'wb') as fp:
+        print("save %s" % os.path.join(self.folder , "date_time_x_list.npy"))         
+        with open(os.path.join(self.folder , "date_time_x_list.npy"), 'wb') as fp:
             pickle.dump(self.date_time_x_list, fp) 
 
-        print("save %s" % (filename + "-date_time_y_list.npy"))      
-        with open(filename + "-date_time_y_list.npy", 'wb') as fp:
+        print("save %s" % os.path.join(self.folder , "date_time_y_list.npy"))      
+        with open(os.path.join(self.folder , "date_time_y_list.npy"), 'wb') as fp:
             pickle.dump(self.date_time_y_list, fp) 
- 
+    
         
     def __stacked_to_daily_seq(self, data_x, data_y, data_v, data_stamp, df_stamp):
         
@@ -389,22 +357,6 @@ class DatasetCUEE(data.Dataset):
                         date_time_x = masked_date_time[s_begin:s_end]
                         date_time_y = masked_date_time[r_begin:r_end]
 
-
-                        # processed_seq = {}
-                        # processed_seq["seq_x"] = seq_x
-                        # processed_seq["seq_y"] = seq_y
-                        # processed_seq["seq_v"] = seq_v
-
-                        # processed_seq["seq_x_mark"] = seq_x_mark
-                        # processed_seq["seq_v_mark"] = seq_v_mark
-                        # processed_seq["seq_y_mark"] = seq_y_mark
-
-                        # processed_seq["date_time_x"] = date_time_x
-                        # processed_seq["date_time_y"] = date_time_y 
-
-                        # np.dump(processed_seq, "Pred_1SeqLen4_Start7:00_ no%d.np" % i)
-
-
                         self.seq_x_list.append(seq_x)
                         self.seq_y_list.append(seq_y)
                         self.seq_v_list.append(seq_v)
@@ -419,14 +371,14 @@ class DatasetCUEE(data.Dataset):
 
     def __getitem__(self, index): 
 
-        seq_x = self.seq_x_list[index] 
-        seq_y = self.seq_y_list[index]
-        seq_v = self.seq_v_list[index] 
+        seq_x = self.h5file["seq_x"][index] 
+        seq_y = self.h5file["seq_y"][index] 
+        seq_v = self.h5file["seq_y"][index] 
 
 
-        seq_x_mark = self.seq_x_mark_list[index] 
-        seq_v_mark = self.seq_v_mark_list[index] 
-        seq_y_mark = self.seq_y_mark_list[index] 
+        seq_x_mark = self.h5file["seq_x_mark"][index] 
+        seq_y_mark = self.h5file["seq_y_mark"][index] 
+        seq_v_mark = self.h5file["seq_v_mark"][index] 
 
         date_time_x = self.date_time_x_list[index]
         date_time_y = self.date_time_y_list[index] 
@@ -434,7 +386,7 @@ class DatasetCUEE(data.Dataset):
         return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark #, date_time_x, date_time_y 
 
     def __len__(self): 
-        return len(self.seq_x_list) # - self.seq_len - self.pred_len + 1
+        return len(self.date_time_y_list) # - self.seq_len - self.pred_len + 1
     
     def inverse_transform_y(self, data_y):
         return self.scaler_y.inverse_transform(data_y)

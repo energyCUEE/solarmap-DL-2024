@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D 
 import pdb
-
+import torch
 SMALL_SIZE = 15
 MEDIUM_SIZE = 15
 BIGGER_SIZE = 15
@@ -29,9 +29,9 @@ def get_gradients(model):
     max_grads = []
     for name, pp in named_parameters:
         if(pp.requires_grad) and ("bias" not in name):
-            layers.append(name) 
-            abs_grads.append(pp.grad.abs().cpu().numpy().mean())
-            max_grads.append(pp.grad.abs().cpu().numpy().max())
+            layers.append(name)   
+            abs_grads.append(pp.grad.abs().mean().cpu().numpy())
+            max_grads.append(torch.topk(pp.grad.abs(), 3).cpu().numpy())
 
     return abs_grads, max_grads, layers
 
@@ -46,8 +46,8 @@ def plot_gradient_mean_and_max_for_each_layer(abs_grads, max_grads, layers, file
 
     fig = plt.figure(figsize=(fig_size_width, 8))  
     fig.subplots_adjust(bottom=0.2) 
-    plt.plot(np.arange(len(max_grads)), max_grads, alpha=0.5, lw=1, color="r")
-    plt.plot(np.arange(len(abs_grads)), abs_grads, alpha=0.5, lw=1, color="b") 
+    plt.plot(np.arange(len(max_grads)), max_grads, alpha=0.5, lw=2, color="r")
+    plt.plot(np.arange(len(abs_grads)), abs_grads, alpha=1, lw=2, color="b") 
     plt.hlines(0, 0, len(abs_grads)+1, lw=2, color="k" )
     plt.xticks(range(0,len(abs_grads), 1), layers, rotation=30, ha="right" )
     plt.xlim(left=0, right=len(abs_grads)-1)
@@ -56,7 +56,7 @@ def plot_gradient_mean_and_max_for_each_layer(abs_grads, max_grads, layers, file
     plt.grid(True)
     plt.legend([Line2D([0], [0], color="r", lw=4),
                 Line2D([0], [0], color="b", lw=4),
-                Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'], bbox_to_anchor=(0, 1.02, 1, 0.2), loc="lower left",
+                Line2D([0], [0], color="k", lw=4)], ['Top-3-gradient', 'mean-gradient', 'zero-gradient'], bbox_to_anchor=(0, 1.02, 1, 0.2), loc="lower left",
                 mode="expand", borderaxespad=0, ncol=3)
     if file_path is not None:
         plt.savefig(file_path)

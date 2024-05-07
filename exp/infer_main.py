@@ -125,7 +125,7 @@ class Infer_Main(Exp_Basic):
 
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze() 
-
+ 
                 preds.append(pred)
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy())
@@ -145,7 +145,7 @@ class Infer_Main(Exp_Basic):
             test_params_flop((batch_x.shape[1],batch_x.shape[2]))
             exit()
 
- 
+
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
         inputx = np.concatenate(inputx, axis=0)
@@ -184,7 +184,7 @@ class Infer_Main(Exp_Basic):
             performance_dict["corr-%d" % seq_i] = corr 
 
             print('%d:  mse: %f, mae: %f | mse-s: %f, mae-s: %f' % (seq_i, mse, mae, mse_scaled, mae_scaled))
-
+ 
             mae_scaled_list.append(mae_scaled)
             mse_scaled_list.append(mse_scaled)
         
@@ -200,6 +200,7 @@ class Infer_Main(Exp_Basic):
  
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
         np.save(os.path.join(folder_path , 'pred.npy'), preds)
+        np.save(os.path.join(folder_path , 'gt.npy'), trues)
         
         performance_dict["Num-param"] = num_params
 
@@ -210,9 +211,12 @@ class Infer_Main(Exp_Basic):
 
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
-
+        
         preds_rev_concat = np.concatenate(preds_rev_list, axis=1)
         trues_rev_concat = np.concatenate(trues_rev_list, axis=1) 
+
+        np.save(os.path.join(folder_path , 'pred_rev.npy'), preds_rev_concat)
+        np.save(os.path.join(folder_path , 'gt_rev.npy'), trues_rev_concat)
  
 
         return preds_rev_concat, trues_rev_concat, timestamp_y, mae_list, mse_list, test_data

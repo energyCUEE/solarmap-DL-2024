@@ -177,27 +177,27 @@ print("\n ============ %s ============  \n" % folder_path)
 if args.pred_len == 1:
     fig, ax = plt.subplots(args.pred_len,1, figsize=(20,10), sharey=True) 
 
-    num_pred = 500 
+    num_pred = 200 
     start = random.randint(0, preds.shape[0])
     stop = start + num_pred 
 
     if not(args.embed == "timeF"):
         time_predictions_ = time_predictions[start:stop,:].reshape([-1])
-
-    groundtruth_      = trues[start:stop,0].reshape([-1])
-    predictions_      = preds[start:stop,0].reshape([-1])  
+ 
+    groundtruth_      = trues[start:stop,:].reshape([-1])
+    predictions_      = preds[start:stop,:].reshape([-1])  
 
     time_x = np.arange(len(groundtruth_))  
     time_x_tick = np.arange(0, len(groundtruth_), 36)
 
-    ax.plot(time_x, groundtruth_, label='actual', color="black")
-    ax.plot(time_x, predictions_, label=args.model, color="red")
-    ax.set_xticks(time_x_tick)
+    ax.plot( groundtruth_, label='actual', color="black")
+    ax.plot( predictions_, label=args.model, color="red")
+    #ax.set_xticks(time_x_tick)
 
     if not(args.embed == "timeF"):
         ax.set_xticklabels(time_predictions_[time_x_tick] , rotation=45, ha='right') 
     else:
-        ax.set_xticklabels(time_x_tick/36, rotation=45, ha='right') 
+        ax.set_xticklabels(time_x_tick, rotation=45, ha='right') 
     ax.set_title("MAE %0.2f @ Horrizon %d mins ahead" % (mae[0], horizon_list[0]))
     ax.legend()  
     ax.grid(True)

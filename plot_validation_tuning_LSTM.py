@@ -15,7 +15,7 @@ elif which_set == "test":
     val_folder_path = "results"
 
 settings = {}
-settings["dataset"]        = "CUEE_PMAPS_NIGHT" # "CUEE_PMAPS"
+settings["dataset"]        = "CUEE_PMAPS" # "CUEE_PMAPS_NIGHT" # "CUEE_PMAPS"
 settings["seq_length"]     =  4
 settings["pred_length"]    =  1
 settings["dropout"]        = 0.1
@@ -29,7 +29,7 @@ settings["n_heads"]        =  8
 settings["d_model"]        =  50 
 settings["d_layers"]       =  1   
 settings["d_ff"]           =  2048
-settings["e_layers"]       =  2 
+settings["e_layers"]       =  5 
 settings["factor"]         =  1
 settings["time_embeding"]  = "F"
 settings["loss"]  = "l1"
@@ -43,9 +43,9 @@ meaning_param["e_layers"] = "#LSMTCell"
 # settings[tuning_param] =  None 
 # value_list             = [8, 16, 32] 
 
-tuning_param    = "e_layers"
+tuning_param    = "d_model" # "e_layers"
 settings[tuning_param] =  None 
-value_list             = [1, 2, 5, 10, 15, 20] 
+value_list             = [16,32,64,128,256] # [1, 2, 5, 10, 15, 20] 
 
 
      
