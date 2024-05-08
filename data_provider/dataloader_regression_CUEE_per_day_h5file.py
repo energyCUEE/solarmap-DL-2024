@@ -260,7 +260,9 @@ class DatasetCUEE(data.Dataset):
 
             self.__stacked_to_daily_seq(data_x, data_y, data_v, data_stamp, df_stamp)
 
-            self.__save_list_to_file() 
+            self.__save_list_to_file()
+
+            self.__read_file_to_list() 
 
 
 
