@@ -21,8 +21,7 @@ model_name=RLSTM
 d_model=50
 #e_layer=5
 
-for e_layer in 5 
-do 
+ 
 python -u generation.py \
     --is_training 1 \
     --root_path ./dataset/CUEE_PMAPS_NIGHT/ \
@@ -48,6 +47,5 @@ python -u generation.py \
     --loss 'l1' \
     --scheduler 'ReduceLROnPlateau' \
     --train_epochs 100 \
-    --batch_size $batch_size --learning_rate 0.001 --itr 1  
-done
+    --batch_size $batch_size --learning_rate 0.001 --itr 1   
  
