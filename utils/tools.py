@@ -142,7 +142,7 @@ def set_folder_name(args, ii):
     dropout_argument = ("%.2f" % args.dropout).replace(".","p")
 
     if args.model == "PatchTST":
-        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
         args.model,
         args.data,
         args.moving_avg,
@@ -159,6 +159,7 @@ def set_folder_name(args, ii):
         args.d_layers,
         args.d_ff,
         args.factor,
+        args.embed_type,
         args.embed,
         args.distil,
         dropout_argument,
@@ -167,7 +168,7 @@ def set_folder_name(args, ii):
         ii)
 
     else: 
-        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
         args.model,
         args.data,
         args.moving_avg,
@@ -182,6 +183,7 @@ def set_folder_name(args, ii):
         args.d_layers,
         args.d_ff,
         args.factor,
+        args.embed_type,
         args.embed,
         args.distil,
         dropout_argument,
@@ -212,9 +214,10 @@ def get_folder_name(settings):
     time_embeding = settings["time_embeding"]  
     loss = settings["loss"] 
     dp   = ("%.02f" % settings["dropout"]).replace(".","p")
+    ebtype = settings["embed_type"]   
  
 
-    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_dp%s_Exp_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, dp, loss)
+    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_etype%d_ebtime%s_dtTrue_dp%s_Exp_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, ebtype, time_embeding, dp, loss)
 
 
 def get_folders_list(settings, tuning_param, value_list): 

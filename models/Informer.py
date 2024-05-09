@@ -20,7 +20,7 @@ class Model(nn.Module):
         self.d_target = configs.d_target
 
         # Embedding
-        if configs.embed_type == 0:
+        if configs.embed_type == 0: # embed_type = 1 is default
             self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq,
                                             configs.dropout)
             self.dec_embedding = DataEmbedding(configs.dec_in, configs.d_model, configs.embed, configs.freq,

@@ -15,10 +15,10 @@ elif which_set == "test":
     val_folder_path = "results"
 
 settings = {}
-settings["dataset"]        = "CUEE_PMAPS" # "CUEE_PMAPS_NIGHT" # "CUEE_PMAPS"
+settings["dataset"]        = "CUEE_PMAPS_NIGHT" # "CUEE_PMAPS_NIGHT" # "CUEE_PMAPS"
 settings["seq_length"]     =  4
 settings["pred_length"]    =  1
-settings["dropout"]        = 0.1
+settings["dropout"]        =  0.1
 settings["network"]        = "RLSTM" 
 
 settings["feature_mode"]   = "MS"
@@ -31,6 +31,7 @@ settings["d_layers"]       =  1
 settings["d_ff"]           =  2048
 settings["e_layers"]       =  5 
 settings["factor"]         =  1
+settings["embed_type"]     =  0
 settings["time_embeding"]  = "F"
 settings["loss"]  = "l1"
  
@@ -38,14 +39,15 @@ settings["loss"]  = "l1"
 meaning_param = {}
 meaning_param["d_model"] = "#Hidden" 
 meaning_param["e_layers"] = "#LSMTCell" 
+meaning_param["seq_length"] = "#lags" 
 
 # tuning_param    = "dm"
 # settings[tuning_param] =  None 
 # value_list             = [8, 16, 32] 
 
-tuning_param    = "d_model" # "e_layers"
+tuning_param    = "seq_length" # "e_layers"
 settings[tuning_param] =  None 
-value_list             = [16,32,64,128,256] # [1, 2, 5, 10, 15, 20] 
+value_list             = [2, 4, 8, 16] # [1, 2, 5, 10, 15, 20] 
 
 
      
@@ -77,14 +79,12 @@ for folder_, value_ in zip(folder_list, value_list):
     overall_mse_list.append(float(stat_dict["mse-overall"]))
 
     print("%s @ %s [%.1f] MAE %f" % (folder_, tuning_param, value_, float(stat_dict["mae-overall"])) )
-
-    
-
+  
 plt.close("all")  
 
 fig, ax1 = plt.subplots(figsize=(15, 5)) 
 
-ax1.plot(value_list, overall_mae_list, color='red')  
+ax1.plot(value_list, overall_mae_list, color='red', linewidth=2)  
 ax1.set_xlabel(meaning_param[tuning_param], fontsize = 'large', color='red')
 ax1.set_ylabel('MAE', fontsize = 'large')
 ax1.tick_params(axis='x', colors='red')
@@ -98,8 +98,17 @@ ax2.set_xticks(value_list)
 ax2.set_xticklabels(n_param)
 ax2.grid(which='major', color='green', linestyle='--', linewidth=1)
 
+if tuning_param == "seq_length":
+    text = "#Hidden=%d & #LSMTCell=%d" % (settings["d_model"], settings["e_layers"])
+
+elif tuning_param == "d_model":
+    text = "#Lags=%d & #LSMTCell=%d" % (settings["seq_length"], settings["e_layers"])
+
+elif tuning_param == "e_layers":
+    text = "#Lags=%d & #Hidden=%d" % (settings["seq_length"], settings["d_model"])
+
 if val_folder_path == "valids":
-    plt.title("Validation set")
+    plt.title("%s --- %s @ Validation set" % (settings["network"], text))
     plt.tight_layout()
     plt.savefig("%s_%s_sq%d_p%d_validate_tuning-%s-%d-%d.png" % (settings["network"], settings["dataset"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 
 
