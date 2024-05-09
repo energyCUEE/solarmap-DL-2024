@@ -20,7 +20,7 @@ num_features=11
 
 model_name=Informer 
 e_layer=4
-for d_model in 16 64 128 256
+for d_model in 16 # 64 128 256
 do
 python -u run_longExp.py \
     --is_training 1 \
