@@ -29,9 +29,11 @@ def get_gradients(model):
     max_grads = []
     for name, pp in named_parameters:
         if(pp.requires_grad) and ("bias" not in name):
-            layers.append(name)   
+        
             abs_grads.append(pp.grad.abs().mean().cpu().numpy())
             max_grads.append(pp.grad.abs().max().cpu().numpy())
+            layers.append(name)   
+
 
     return abs_grads, max_grads, layers
 

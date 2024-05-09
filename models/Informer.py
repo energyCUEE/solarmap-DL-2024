@@ -44,7 +44,7 @@ class Model(nn.Module):
         elif configs.embed_type == 4:
             self.enc_embedding = DataEmbedding_wo_pos_temp(configs.enc_in, configs.d_model, configs.embed, configs.freq,
                                                     configs.dropout)
-            self.dec_embedding = DataEmbedding_wo_pos_temp(configs.d_target, configs.d_model, configs.embed, configs.freq, configs.dropout) 
+            self.dec_embedding = DataEmbedding_wo_pos_temp(configs.dec_in, configs.d_model, configs.embed, configs.freq, configs.dropout) 
         
         # Encoder
 

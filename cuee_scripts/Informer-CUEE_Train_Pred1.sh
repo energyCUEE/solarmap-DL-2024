@@ -9,7 +9,7 @@ fi
 pred_len=1
 label_len=0  
 moving_avg=4
-batch_size=16
+batch_size=32
 seq_len=4
 target=I
 embed_type=4 
@@ -44,11 +44,11 @@ python -u run_longExp.py \
     --d_layers   1 \
     --factor     3 \
     --enc_in $num_features \
-    --dec_in $num_features \
+    --dec_in 1 \
     --c_out  $num_features \
     --des 'Exp' \
     --loss 'mse' \
     --train_epochs 10 \
-    --batch_size $batch_size --learning_rate 0.0001 --itr 1  
+    --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done
  
