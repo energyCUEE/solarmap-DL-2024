@@ -7,7 +7,7 @@ from torch import nn
 from torch import Tensor
 import torch.nn.functional as F
 import numpy as np
-
+import pdb
 #from collections import OrderedDict
 from layers.PatchTST_layers import *
 from layers.RevIN import RevIN
@@ -31,7 +31,7 @@ class PatchTST_backbone(nn.Module):
         # Patching
         self.patch_len = patch_len
         self.stride = stride
-        self.padding_patch = padding_patch
+        self.padding_patch = padding_patch 
         patch_num = int((context_window - patch_len)/stride + 1)
         if padding_patch == 'end': # can be modified to general case
             self.padding_patch_layer = nn.ReplicationPad1d((0, stride)) 
@@ -57,7 +57,9 @@ class PatchTST_backbone(nn.Module):
             self.head = Flatten_Head(self.individual, self.n_vars, self.head_nf, target_window, head_dropout=head_dropout)
         
     
-    def forward(self, z):                                                                   # z: [bs x nvars x seq_len]
+    def forward(self, z): 
+         
+                                                                          # z: [bs x nvars x seq_len]
         # norm
         if self.revin: 
             z = z.permute(0,2,1)
@@ -66,7 +68,8 @@ class PatchTST_backbone(nn.Module):
             
         # do patching
         if self.padding_patch == 'end':
-            z = self.padding_patch_layer(z)
+            z = self.padding_patch_layer(z) 
+
         z = z.unfold(dimension=-1, size=self.patch_len, step=self.stride)                   # z: [bs x nvars x patch_num x patch_len]
         z = z.permute(0,1,3,2)                                                              # z: [bs x nvars x patch_len x patch_num]
         

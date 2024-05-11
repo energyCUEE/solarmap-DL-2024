@@ -22,6 +22,8 @@ import numpy as np
 from utils.tools import save_settings_dict
 from utils.learning_tools import plot_gradients
 from tqdm import tqdm
+
+torch.multiprocessing.set_sharing_strategy('file_system') 
 warnings.filterwarnings('ignore')
 
 class Exp_Main(Exp_Basic):
@@ -65,60 +67,39 @@ class Exp_Main(Exp_Basic):
         elif which_loss == "l1":
             criterion = nn.L1Loss()
         return criterion
+    
+    def __myfeedforward(self, batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark):
 
-    def vali(self, vali_data, vali_loader, criterion):
-        total_loss = []
-        total_MAE  = []
-        self.model.eval()
-        with torch.no_grad():
-            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(vali_loader):  ###### <<<<
-                
-                batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float()
-                batch_v = batch_v.float().to(self.device)
+        batch_x = batch_x.float().to(self.device)
+        batch_y = batch_y.float()
+        batch_v = batch_v.float().to(self.device)
 
-                batch_size, pred_len, pred_feature = batch_y.shape
+        batch_size, pred_len, pred_feature = batch_y.shape
 
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_v_mark = batch_v_mark.float().to(self.device)
+        batch_x_mark = batch_x_mark.float().to(self.device)
+        batch_y_mark = batch_y_mark.float().to(self.device)
+        batch_v_mark = batch_v_mark.float().to(self.device)
 
-                # decoder input
-                dec_inp = batch_v
-                # dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-                # encoder - decoder
- 
-                if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
-                    outputs = self.model(batch_x)
-                
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0]
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)
-                
-                
-                outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
-                batch_y = batch_y.to(self.device) 
+        # decoder input
+        # dec_inp = batch_v
+        # dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
+        # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+        # encoder - decoder
 
-                pred = outputs.detach().cpu()
-                true = batch_y.detach().cpu()
+        if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
+            outputs = self.model(batch_x)
+        
+        else:
+            if self.args.output_attention:
+                outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0]
+            else:
+                outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)  
+         
+        outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
+        batch_y = batch_y.to(self.device)  
 
-                loss = criterion(pred, true)
-                #loss = np.mean((pred.numpy() - true.numpy()) ** 2)   
-                total_loss.append(loss)
- 
-                pred_rev = vali_data.inverse_transform_y(pred.view(-1,1).numpy())
-                true_rev = vali_data.inverse_transform_y(true.view(-1,1).numpy())
-                MAE_loss  = MAE(pred_rev, true_rev)
-                total_MAE.append(MAE_loss)
+        return outputs, batch_y 
 
-
-        total_loss = np.average(total_loss)
-        total_MAE  = np.average(total_MAE) 
-        self.model.train()
-        return total_loss, total_MAE
 
     def train(self, setting):
         
@@ -171,39 +152,8 @@ class Exp_Main(Exp_Basic):
             
                 iter_count += 1
                 model_optim.zero_grad()
-
-                batch_x = batch_x.float().to(self.device) 
-                batch_y = batch_y.float().to(self.device)
-                batch_v = batch_v.float().to(self.device)
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_v_mark = batch_v_mark.float().to(self.device)
-
-                batch_size, pred_len, pred_feature = batch_y.shape 
- 
-                # decoder input 
-                # dec_inp = torch.zeros(self.args.batch_size, self.args.pred_len, self.args.enc_in ).float().to(self.device)
-                # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device) 
-                # encoder - decoder 
-                if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model: 
-                        outputs = self.model(batch_x)
-
-                else:
-
-                    if self.args.output_attention:
-                    
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0] 
-                    
-                    else: 
-                        # dec_inp = Batch x Pred_len x Feat  
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_y_mark, batch_y)
                 
-                # print(outputs.shape,batch_y.shape)
-                #f_dim = -1 if self.args.features == 'MS' else 0   
- 
-                outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
-                batch_y = batch_y.to(self.device)
+                outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
 
                 loss    = criterion(outputs, batch_y)
                 train_loss.append(loss.item())
@@ -267,54 +217,78 @@ class Exp_Main(Exp_Basic):
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))   
         return self.model
+    
 
+
+    def vali(self, vali_data, vali_loader, criterion):
+        total_loss = []
+        total_MAE  = []
+
+        preds = []
+        trues = []
+
+        self.model.eval()
+        with torch.no_grad():
+
+            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(vali_loader):  ###### <<<< 
+                
+                outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
+
+
+                pred = outputs.detach().cpu()
+                true = batch_y.detach().cpu() 
+
+                loss = criterion(pred, true) 
+                total_loss.append(loss)
+
+                preds.append(pred.numpy())
+                trues.append(true.numpy())
+
+        preds = np.concatenate(preds, axis=0)
+        trues = np.concatenate(trues, axis=0)
+
+        preds_rev_list = []
+        trues_rev_list = []
+
+        for seq_i in range(self.args.pred_len): 
+
+            preds_rev = vali_data.inverse_transform_y(preds[:,seq_i,:])
+            trues_rev = vali_data.inverse_transform_y(trues[:,seq_i,:])
+
+            preds_rev_list.append(preds_rev)
+            trues_rev_list.append(trues_rev)
+ 
+            mae_, _, rmse, mape, mspe, rse, corr = metric(preds_rev, trues_rev) 
+            total_MAE.append(mae_)  
+
+        total_loss = np.average(total_loss)
+        total_MAE  = np.average(total_MAE) 
+
+        self.model.train()
+
+        return total_loss, total_MAE
+    
     def test(self, setting, test=0):
+ 
         test_data, test_loader = self._get_data(flag='test')
         
-        if test:
-            print('loading model')
-            self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
-
+        print('Loading model : [%s]' % setting) 
+        self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+         
         preds = []
         trues = []
         inputx = []
         folder_path = './run_testing/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-
+ 
         self.model.eval()
         with torch.no_grad():
+            
             for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(test_loader):
-                
-                batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float().to(self.device)
-                batch_v = batch_v.float().to(self.device)
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_v_mark = batch_v_mark.float().to(self.device)
-
-                batch_size, pred_len, pred_feature = batch_y.shape
-
-                # decoder input
-                # dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-                # encoder - decoder
+                 
+                outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
  
-                if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
-                        outputs = self.model(batch_x)
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0]
-
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)
-
-                #f_dim = -1 if self.args.features == 'MS' else 0
-                # print(outputs.shape,batch_y.shape)
-                outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
-                batch_y = batch_y.to(self.device)
-                
                 outputs = outputs.cpu().numpy()
                 batch_y = batch_y.cpu().numpy()
 
@@ -324,9 +298,8 @@ class Exp_Main(Exp_Basic):
                 preds.append(pred)
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy()) 
-                
-
-                if i % 20 == 0:
+                 
+                if i % 1000 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
                     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
@@ -335,39 +308,53 @@ class Exp_Main(Exp_Basic):
         if self.args.test_flop:
             test_params_flop((batch_x.shape[1],batch_x.shape[2]))
             exit()
-  
+
+        ###################
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
-        inputx = np.concatenate(inputx, axis=0)
 
-        # preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        # trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        # inputx = inputx.reshape(-1, inputx.shape[-2], inputx.shape[-1])
+        preds_rev_list = []
+        trues_rev_list = []
 
+        total_RMSE = []
+        total_RMSE_rev = []
+
+        total_MAE = []
+        total_MAE_rev = []
+
+        for seq_i in range(self.args.pred_len): 
+
+            preds_rev = test_data.inverse_transform_y(preds[:,seq_i,:])
+            trues_rev = test_data.inverse_transform_y(trues[:,seq_i,:])
+
+            preds_rev_list.append(preds_rev)
+            trues_rev_list.append(trues_rev)
+
+            mae, _, rmse, mape, mspe, rse, corr = metric(preds[:,seq_i,:], trues[:,seq_i,:]) 
+            mae_rev, _, rmse_rev, mape, mspe, rse, corr = metric(preds_rev, trues_rev) 
+            
+            total_RMSE.append(rmse)
+            total_MAE.append(mae)
+
+            total_RMSE_rev.append(rmse_rev)
+            total_MAE_rev.append(mae_rev)     
+      
         # result save
-        folder_path = './results/' + setting + '/'
+        folder_path = './testing/' + setting + '/'
         if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-  
-        
-        mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues) 
-
-        pred_rev = test_data.inverse_transform_y(preds.reshape(-1,1))
-        true_rev = test_data.inverse_transform_y(trues.reshape(-1,1))
-
-        mae_rev, mse_rev, _, _, _, rse_rev, _ = metric(pred_rev, true_rev) 
+            os.makedirs(folder_path) 
         
         print("On testing dataset ....")
-        print('scal: mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
-        print('revs: mse:{}, mae:{}, rse:{}'.format(mse_rev, mae_rev, rse_rev))
+        print('scal: rmse:{}, mae:{}'.format(np.mean(total_RMSE), np.mean(total_MAE))) 
+        print('revs: rmse:{}, mae:{}'.format(np.mean(total_RMSE_rev), np.mean(total_MAE_rev)))
  
 
         result_dict = {}
         result_dict["inputx"] = inputx
         result_dict["preds"] = preds
         result_dict["trues"] = trues
-        result_dict["preds_rev"] = pred_rev
-        result_dict["trues_rev"] = true_rev
+        result_dict["preds_rev"] = preds_rev_list
+        result_dict["trues_rev"] = trues_rev_list
          
 
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
@@ -375,69 +362,15 @@ class Exp_Main(Exp_Basic):
 
         stats_dict = {}
 
-        stats_dict["mae"] = mae
-        stats_dict["mse"] = mse
-        stats_dict["rse"] = rse
-        stats_dict["mae_rev"] = mae_rev
-        stats_dict["mse_rev"] = mse_rev
-        stats_dict["rse_rev"] = rse_rev
+        stats_dict["mae"] = total_MAE
+        stats_dict["mse"] = total_RMSE 
+        stats_dict["mae_rev"] = total_MAE_rev
+        stats_dict["mse_rev"] = total_RMSE_rev 
 
         with open(os.path.join(folder_path, 'stats_mae_mse.csv'), 'w') as f:
             for key in stats_dict.keys():
                 f.write("%s,%s\n"%(key,stats_dict[key]))
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
-        return
+        return total_MAE_rev
 
-    def predict(self, setting, load=False):
-        pred_data, pred_loader = self._get_data(flag='pred')
-
-        if load:
-            path = os.path.join(self.args.checkpoints, setting)
-            best_model_path = path + '/' + 'checkpoint.pth'
-            self.model.load_state_dict(torch.load(best_model_path))
-
-        preds = []
-
-        self.model.eval()
-        with torch.no_grad():
-            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(pred_loader):
-
-                batch_x = batch_x.float().to(self.device)
-                batch_y = batch_y.float()
-                batch_v = batch_v.float()
-
-                batch_size, pred_len, pred_feature = batch_y.shape
-
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
-                batch_v_mark = batch_v_mark.float().to(self.device)
-
-                # decoder input
-                # dec_inp = torch.zeros([batch_y.shape[0], self.args.pred_len, batch_y.shape[2]]).float().to(batch_y.device)
-                # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
-                # encoder - decoder
- 
-                if 'Linear' in self.args.model or 'TST' in self.args.model:
-                    outputs = self.model(batch_x)
-                else:
-                    if self.args.output_attention:
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)[0]
-                    else:
-                        outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)
-
-                pred = outputs.detach().cpu().numpy()  # .squeeze()
-                preds.append(pred)
-
-        preds = np.array(preds)
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-
-        # result save
-        folder_path = './results/' + setting + '/'
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-        np.save(folder_path + 'real_prediction.npy', preds)
-        pd.DataFrame(np.append(np.transpose([pred_data.future_dates]), preds[0], axis=1), columns=pred_data.cols).to_csv(folder_path + 'real_prediction.csv', index=False)
-
-        return

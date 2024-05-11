@@ -46,6 +46,8 @@ def plot_gradient_mean_and_max_for_each_layer(abs_grads, max_grads, layers, file
     else:
         fig_size_width = 15
 
+    plt.close("all")  
+
     fig = plt.figure(figsize=(fig_size_width, 8))  
     fig.subplots_adjust(bottom=0.2) 
     plt.plot(np.arange(len(max_grads)), max_grads, alpha=1, lw=2, color="r")

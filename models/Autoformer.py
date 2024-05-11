@@ -6,6 +6,7 @@ from layers.AutoCorrelation import AutoCorrelation, AutoCorrelationLayer
 from layers.Autoformer_EncDec import Encoder, Decoder, EncoderLayer, DecoderLayer, my_Layernorm, series_decomp
 import math
 import numpy as np
+import pdb
 
 
 class Model(nn.Module):
@@ -53,7 +54,10 @@ class Model(nn.Module):
                                                     configs.dropout)
             self.dec_embedding = DataEmbedding_wo_pos_temp(configs.dec_in, configs.d_model, configs.embed, configs.freq,
                                                     configs.dropout)
-        
+            
+
+        self.fc1 =nn.Linear(configs.enc_in, configs.dec_in, bias=True) 
+        self.fc2 =nn.Linear(configs.enc_in, configs.dec_in, bias=True) 
         # Encoder
         self.encoder = Encoder(
             [
@@ -100,20 +104,24 @@ class Model(nn.Module):
                 enc_self_mask=None, dec_self_mask=None, dec_enc_mask=None):
         # decomp init
         mean = torch.mean(x_enc, dim=1).unsqueeze(1).repeat(1, self.pred_len, 1)
-        zeros = torch.zeros([x_dec.shape[0], self.pred_len, x_dec.shape[2]], device=x_enc.device)
+        zeros = torch.zeros([x_enc.shape[0], self.pred_len, x_enc.shape[2]], device=x_enc.device)
         seasonal_init, trend_init = self.decomp(x_enc)
         # decoder input
         trend_init = torch.cat([trend_init[:, -self.label_len:, :], mean], dim=1)
+
         seasonal_init = torch.cat([seasonal_init[:, -self.label_len:, :], zeros], dim=1)
         # enc
         enc_out = self.enc_embedding(x_enc, x_mark_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
-        # dec
-        dec_out = self.dec_embedding(seasonal_init, x_mark_dec)
-        seasonal_part, trend_part = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask,
-                                                 trend=trend_init)
+        # dec 
+        seasonal_init = self.fc1(seasonal_init) 
+        dec_out = self.dec_embedding(seasonal_init, x_mark_dec) 
+        
+        seasonal_part, trend_part = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask, trend=trend_init) 
         # final
         dec_out = trend_part + seasonal_part
+        
+        dec_out = self.fc2(dec_out) 
 
         if self.output_attention:
             return dec_out[:, -self.pred_len:, :], attns

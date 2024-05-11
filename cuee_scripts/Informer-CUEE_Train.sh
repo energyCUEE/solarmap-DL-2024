@@ -11,8 +11,7 @@ label_len=0
 moving_avg=4
 batch_size=32
 seq_len=4
-target=I
-embed_type=4 
+target=I 
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
@@ -20,7 +19,8 @@ num_features=11
 
 model_name=Informer 
 e_layer=4
-for d_model in 16 # 64 128 256
+embed_type=2
+for d_model in 4 8 16 32 64
 do
 python -u run_longExp.py \
     --is_training 1 \

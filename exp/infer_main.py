@@ -153,7 +153,7 @@ class Infer_Main(Exp_Basic):
         # result save
 
         mae_list = []
-        mse_list = []
+        rmse_list = []
         
         performance_dict = {}
 
@@ -161,7 +161,7 @@ class Infer_Main(Exp_Basic):
         trues_rev_list = []
         
         mae_scaled_list = []
-        mse_scaled_list = []
+        rmse_scaled_list = []
 
         for seq_i in range(self.args.pred_len): 
  
@@ -171,31 +171,31 @@ class Infer_Main(Exp_Basic):
             preds_rev_list.append(preds_rev)
             trues_rev_list.append(trues_rev)
 
-            mae, mse, rmse, mape, mspe, rse, corr = metric(preds_rev, trues_rev)
+            mae, _ , rmse, mape, mspe, rse, corr = metric(preds_rev, trues_rev)
+            
             mae_list.append(mae)
-            mse_list.append(mse)
+            rmse_list.append(rmse)
+ 
+            mae_scaled, _, rmse_scaled, _, _, _, _ = metric(preds[:,seq_i,:], trues[:,seq_i,:]) 
 
-            mae_scaled, mse_scaled, _, _, _, _, _ = metric(preds[:,seq_i,:], trues[:,seq_i,:])
-
-
-            performance_dict["mse-%d" % seq_i] = mse
-            performance_dict["mae-%d" % seq_i] = mae
-            performance_dict["rse-%d" % seq_i] = rse
+            performance_dict["rmse-%d" % seq_i] = rmse
+            performance_dict["mae-%d" % seq_i]  = mae
+            performance_dict["rse-%d" % seq_i]  = rse
             performance_dict["corr-%d" % seq_i] = corr 
 
-            print('%d:  mse: %f, mae: %f | mse-s: %f, mae-s: %f' % (seq_i, mse, mae, mse_scaled, mae_scaled))
+            print('%d:  rmse: %f, mae: %f | rmse-s: %f, mae-s: %f' % (seq_i, rmse, mae, rmse_scaled, mae_scaled))
  
             mae_scaled_list.append(mae_scaled)
-            mse_scaled_list.append(mse_scaled)
+            rmse_scaled_list.append(rmse_scaled)
         
-        performance_dict["mse-overall" ] = sum(mse_list)/self.args.pred_len
+        performance_dict["rmse-overall" ] = sum(rmse_list)/self.args.pred_len
         performance_dict["mae-overall" ] = sum(mae_list)/self.args.pred_len
 
-        performance_dict["mse-s-overall" ] = sum(mse_scaled_list)/self.args.pred_len
+        performance_dict["rmse-s-overall" ] = sum(rmse_scaled_list)/self.args.pred_len
         performance_dict["mae-s-overall" ] = sum(mae_scaled_list)/self.args.pred_len
 
-        print('OVERALL:    mse:{}, mae:{}'.format( sum(mse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
-        print('OVERALL-S:  mse:{}, mae:{}'.format( sum(mse_scaled_list)/self.args.pred_len, sum(mae_scaled_list)/self.args.pred_len ))
+        print('OVERALL:    rmse:{}, mae:{}'.format( sum(rmse_list)/self.args.pred_len, sum(mae_list)/self.args.pred_len ))
+        print('OVERALL-S:  mse:{}, mae:{}'.format( sum(rmse_scaled_list)/self.args.pred_len, sum(mae_scaled_list)/self.args.pred_len ))
         
  
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
@@ -219,5 +219,5 @@ class Infer_Main(Exp_Basic):
         np.save(os.path.join(folder_path , 'gt_rev.npy'), trues_rev_concat)
  
 
-        return preds_rev_concat, trues_rev_concat, timestamp_y, mae_list, mse_list, test_data
+        return preds_rev_concat, trues_rev_concat, timestamp_y, mae_list, rmse_list, test_data
 
