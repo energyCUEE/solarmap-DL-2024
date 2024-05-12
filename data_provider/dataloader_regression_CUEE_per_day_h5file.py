@@ -177,6 +177,7 @@ class DatasetCUEE(data.Dataset):
 
             #'updated_measurement_Iclr_new.csv'   
             raw_data       =  read_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'T_nwp', 'I_nwp', 'average_k','condition']].copy()
+
             raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=False) # Should be false If False == Thailand Local Time (Guessing)
             raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
             raw_data['day']          = [ date.day    for date in raw_data['Datetime'] ]
@@ -208,7 +209,7 @@ class DatasetCUEE(data.Dataset):
 
             df_raw_train  = choose_datetime(df_train_raw, start_time=start_time, end_time=end_time)   
             df_raw        = choose_datetime(raw_data, start_time=start_time, end_time=end_time)    
-
+            
             # scaling  
             train_data_x = df_raw_train[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
             train_data_v = df_raw_train[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
@@ -220,6 +221,7 @@ class DatasetCUEE(data.Dataset):
             df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
             
             df_data_y    = df_raw[[self.target]]  
+
 
             df_raw_sky_condition = df_raw.copy()
             df_raw_sky_condition.rename(columns={'condition': 'sky_condition_roc'}, inplace=True)
@@ -235,7 +237,6 @@ class DatasetCUEE(data.Dataset):
 
         self.scaler_y.fit(train_data_y.values.reshape(-1,1)) 
         data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1)) 
-  
 
         isfiles_list = []
         for file_suffix in SUFFIX_SAVED_FILES_LIST:
@@ -283,7 +284,7 @@ class DatasetCUEE(data.Dataset):
 
         print("Read %s" % os.path.join(self.folder , "date_time_y_list.npy")) 
         with open(os.path.join(self.folder , "date_time_y_list.npy"), 'rb') as fp:
-            self.date_time_y_list  = pickle.load(fp) 
+            self.date_time_y_list  = pickle.load(fp)
 
         # print("Read %s" % os.path.join(self.folder, "sky_condition_list.npy"))
         # with  open(os.path.join(self.folder , "sky_condition_list.npy"), 'rb') as fp:
@@ -335,6 +336,7 @@ class DatasetCUEE(data.Dataset):
 
         self.seq_sky_condition_list = []
 
+
         bar = tqdm(self.stations_list) 
         for stations_ in bar:
             for date_ in date_list:      
@@ -368,8 +370,9 @@ class DatasetCUEE(data.Dataset):
                         else:
                             seq_v = masked_data_v[ov_begin:ov_end, :] 
                             
-                        seq_y  = masked_data_y[r_begin:r_end, :]
+                        seq_y  = masked_data_y[r_begin:r_end, :] 
                         seq_sky_condition = masked_data_sky_condition[r_begin:r_end, :]
+ 
 
                         seq_x_mark = masked_data_stamp[s_begin:s_end]
                         seq_v_mark = masked_data_stamp[ov_begin:ov_end] 
@@ -381,7 +384,7 @@ class DatasetCUEE(data.Dataset):
                         self.seq_x_list.append(seq_x)
                         self.seq_y_list.append(seq_y)
                         self.seq_v_list.append(seq_v)
-                        self.seq_sky_condition_list.append(seq_sky_condition)
+                        self.seq_sky_condition_list.append(seq_sky_condition) 
 
                         self.seq_x_mark_list.append(seq_x_mark)
                         self.seq_v_mark_list.append(seq_v_mark)
@@ -397,6 +400,7 @@ class DatasetCUEE(data.Dataset):
         seq_y = self.h5file["seq_y"][index] 
         seq_v = self.h5file["seq_v"][index]
         seq_sky_condition = self.h5file["seq_sky_condition"][index]
+ 
 
         seq_x_mark = self.h5file["seq_x_mark"][index] 
         seq_y_mark = self.h5file["seq_y_mark"][index] 
@@ -408,6 +412,7 @@ class DatasetCUEE(data.Dataset):
         date_time_y = np.array([ts.timestamp() for ts in self.date_time_y_list[index]], dtype=np.int64)
 
         return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark , date_time_x, date_time_y, seq_sky_condition
+
 
     def __len__(self): 
         return len(self.date_time_y_list) # - self.seq_len - self.pred_len + 1

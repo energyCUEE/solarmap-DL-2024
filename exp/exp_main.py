@@ -285,8 +285,6 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
         inputx = []
-        datetimes = []
-        sky_conditions = []
         folder_path = './run_testing/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -301,18 +299,12 @@ class Exp_Main(Exp_Basic):
                 outputs = outputs.cpu().numpy()
                 batch_y = batch_y.numpy()
 
-                batch_datetime_y = batch_datetime_y.float().to(self.device)
-                batch_sky_condition = batch_sky_condition.float().to(self.device)
-
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
 
                 preds.append(pred)
                 trues.append(true)
-                inputx.append(batch_x.detach().cpu().numpy())
-
-                datetimes.append(batch_datetime_y.cpu())
-                sky_conditions.append(batch_sky_condition.cpu())
+                inputx.append(batch_x.detach().cpu().numpy()) 
                  
                 if i % 1000 == 0:
                     input = batch_x.detach().cpu().numpy()
