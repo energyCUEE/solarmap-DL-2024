@@ -21,8 +21,8 @@ dataloader = DataLoader(dataset, batch_size=1)
 trues_rev_list = []
  
 for data_i, data_ in enumerate(dataloader):
-    seq_x, seq_y, seq_v,  seq_x_mark, seq_y_mark, seq_v_mark = data_  
-  
+    seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark , date_time_x, date_time_y, seq_sky_condition = data_
+    pdb.set_trace()
     trues_rev_list.append(dataset.inverse_transform_y(seq_y[:,0,:])) 
         
     if data_i == 200:

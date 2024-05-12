@@ -21,7 +21,7 @@ PMAS_CUEE_TEST  = "pmaps_test_data.csv"
 PMAS_CUEE_VALID = "pmaps_validate_data.csv"
 PMAS_CUEE_TRAIN = "pmaps_train_data.csv"
 
-SUFFIX_SAVED_FILES_LIST = ["data.h5", "date_time_x_list.npy", "date_time_y_list.npy"]
+SUFFIX_SAVED_FILES_LIST = ["data.h5", "date_time_x_list.npy", "date_time_y_list.npy", "sky_condition_list.npy"]
 
 def npdatetime_to_string(numpy_array):   
     list_str = np.datetime_as_string(numpy_array, unit='s').tolist()
@@ -176,7 +176,7 @@ class DatasetCUEE(data.Dataset):
             df_train_raw['minute']       = [ date.minute for date in df_train_raw['Datetime'] ]
 
             #'updated_measurement_Iclr_new.csv'   
-            raw_data       =  read_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'T_nwp', 'I_nwp']].copy()  
+            raw_data       =  read_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'T_nwp', 'I_nwp', 'average_k','condition']].copy()
             raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=False) # Should be false If False == Thailand Local Time (Guessing)
             raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
             raw_data['day']          = [ date.day    for date in raw_data['Datetime'] ]
@@ -220,6 +220,11 @@ class DatasetCUEE(data.Dataset):
             df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
             df_data_y    = df_raw[[self.target]]  
 
+            df_raw_sky_condition = df_raw.copy()
+            df_raw_sky_condition.rename(columns={'condition': 'sky_condition_roc'}, inplace=True)
+            df_raw_sky_condition.loc[:, 'sky_condition_roc'] = df_raw_sky_condition['sky_condition_roc'].apply(
+                lambda x: 1 if x == 'clr' else (2 if x == 'partly_cloudy' else 3))
+            df_data_sky_condition = df_raw_sky_condition[['average_k', 'sky_condition_roc']].values
 
         self.scaler_x.fit(train_data_x.values) 
         data_x = self.scaler_x.transform(df_data_x.values)
@@ -258,7 +263,7 @@ class DatasetCUEE(data.Dataset):
             date_time = npdatetime_to_string(df_stamp['Datetime'].values.copy())   
             df_stamp['date'] = pd.to_datetime(df_stamp['Datetime']).dt.date 
 
-            self.__stacked_to_daily_seq(data_x, data_y, data_v, data_stamp, df_stamp)
+            self.__stacked_to_daily_seq(data_x, data_y, data_v, data_stamp, df_stamp, df_data_sky_condition)
 
             self.__save_list_to_file()
 
@@ -279,6 +284,9 @@ class DatasetCUEE(data.Dataset):
         with open(os.path.join(self.folder , "date_time_y_list.npy"), 'rb') as fp:
             self.date_time_y_list  = pickle.load(fp) 
 
+        print("Read %s" % os.path.join(self.folder, "sky_condition_list.npy"))
+        with  open(os.path.join(self.folder , "sky_condition_list.npy"), 'rb') as fp:
+            self.seq_sky_condition_list  = pickle.load(fp)
 
     def __save_list_to_file(self): 
 
@@ -287,7 +295,8 @@ class DatasetCUEE(data.Dataset):
 
             h5f.create_dataset("seq_x", data=np.asarray(self.seq_x_list) )
             h5f.create_dataset("seq_y", data=np.asarray(self.seq_y_list) )
-            h5f.create_dataset("seq_v", data=np.asarray(self.seq_v_list) ) 
+            h5f.create_dataset("seq_v", data=np.asarray(self.seq_v_list) )
+            h5f.create_dataset("seq_sky_condition", data=np.asarray(self.seq_sky_condition_list))
 
             h5f.create_dataset("seq_x_mark", data=np.asarray(self.seq_x_mark_list) )
             h5f.create_dataset("seq_y_mark", data=np.asarray(self.seq_y_mark_list) )
@@ -302,8 +311,11 @@ class DatasetCUEE(data.Dataset):
         with open(os.path.join(self.folder , "date_time_y_list.npy"), 'wb') as fp:
             pickle.dump(self.date_time_y_list, fp) 
     
-        
-    def __stacked_to_daily_seq(self, data_x, data_y, data_v, data_stamp, df_stamp):
+        print("save %s" % os.path.join(self.folder , "sky_condition_list.npy"))
+        with open(os.path.join(self.folder , "sky_condition_list.npy"), 'wb') as fp:
+            pickle.dump(self.seq_sky_condition_list, fp)
+
+    def __stacked_to_daily_seq(self, data_x, data_y, data_v, data_stamp, df_stamp, df_data_sky_condition):
         
         date_list = (np.unique(df_stamp['date'].values)).tolist() 
 
@@ -318,6 +330,8 @@ class DatasetCUEE(data.Dataset):
         self.date_time_x_list = []
         self.date_time_y_list = []
 
+        self.seq_sky_condition_list = []
+
         bar = tqdm(self.stations_list) 
         for stations_ in bar:
             for date_ in date_list:      
@@ -328,7 +342,8 @@ class DatasetCUEE(data.Dataset):
                     masked_data_y = data_y[mask_,:]
                     masked_data_v = data_v[mask_,:] 
                     masked_date_time = df_stamp['Datetime'].iloc[mask_] 
-                    masked_data_stamp = data_stamp[mask_,:] 
+                    masked_data_stamp = data_stamp[mask_,:]
+                    masked_data_sky_condition =  df_data_sky_condition[mask_,:]
                     num_sample_per_day = sum(mask_ == True) - self.seq_len - self.pred_len + 1 
  
                     for index in range(num_sample_per_day):
@@ -349,10 +364,10 @@ class DatasetCUEE(data.Dataset):
                         else:
                             seq_v = masked_data_v[ov_begin:ov_end, :] 
                             
-                        seq_y  = masked_data_y[r_begin:r_end, :] 
-                    
+                        seq_y  = masked_data_y[r_begin:r_end, :]
+                        seq_sky_condition = masked_data_sky_condition[r_begin:r_end, :]
 
-                        seq_x_mark = masked_data_stamp[s_begin:s_end] 
+                        seq_x_mark = masked_data_stamp[s_begin:s_end]
                         seq_v_mark = masked_data_stamp[ov_begin:ov_end] 
                         seq_y_mark = masked_data_stamp[r_begin:r_end] 
                         
@@ -362,7 +377,8 @@ class DatasetCUEE(data.Dataset):
                         self.seq_x_list.append(seq_x)
                         self.seq_y_list.append(seq_y)
                         self.seq_v_list.append(seq_v)
-                        
+                        self.seq_sky_condition_list.append(seq_sky_condition)
+
                         self.seq_x_mark_list.append(seq_x_mark)
                         self.seq_v_mark_list.append(seq_v_mark)
                         self.seq_y_mark_list.append(seq_y_mark)
@@ -375,8 +391,8 @@ class DatasetCUEE(data.Dataset):
 
         seq_x = self.h5file["seq_x"][index] 
         seq_y = self.h5file["seq_y"][index] 
-        seq_v = self.h5file["seq_y"][index] 
-
+        seq_v = self.h5file["seq_y"][index]
+        seq_sky_condition = self.h5file["seq_sky_condition"][index]
 
         seq_x_mark = self.h5file["seq_x_mark"][index] 
         seq_y_mark = self.h5file["seq_y_mark"][index] 
@@ -384,8 +400,10 @@ class DatasetCUEE(data.Dataset):
 
         date_time_x = self.date_time_x_list[index]
         date_time_y = self.date_time_y_list[index] 
- 
-        return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark #, date_time_x, date_time_y 
+        date_time_x = np.array([ts.timestamp() for ts in self.date_time_x_list[index]], dtype=np.int64)
+        date_time_y = np.array([ts.timestamp() for ts in self.date_time_y_list[index]], dtype=np.int64)
+
+        return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark , date_time_x, date_time_y, seq_sky_condition
 
     def __len__(self): 
         return len(self.date_time_y_list) # - self.seq_len - self.pred_len + 1

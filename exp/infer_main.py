@@ -88,7 +88,8 @@ class Infer_Main(Exp_Basic):
         MSE_temp_list = []
         pbar = tqdm(test_loader)
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(pbar):
+            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark,
+                    batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(pbar):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
                 batch_v = batch_v.float().to(self.device)

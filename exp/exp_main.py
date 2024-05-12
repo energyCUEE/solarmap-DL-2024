@@ -148,7 +148,8 @@ class Exp_Main(Exp_Basic):
             self.model.train() 
 
             pbar = tqdm(train_loader)
-            for i, (batch_x, batch_y,  batch_v, batch_x_mark, batch_y_mark,  batch_v_mark) in enumerate(pbar):  ###### <<<<
+            for i, (batch_x, batch_y,  batch_v, batch_x_mark, batch_y_mark,  batch_v_mark,
+                    batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(pbar):  ###### <<<<
             
                 iter_count += 1
                 model_optim.zero_grad()
@@ -230,7 +231,8 @@ class Exp_Main(Exp_Basic):
         self.model.eval()
         with torch.no_grad():
 
-            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(vali_loader):  ###### <<<< 
+            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark,
+                    batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(vali_loader):  ###### <<<<
                 
                 outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
 
@@ -278,6 +280,8 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
         inputx = []
+        datetimes = []
+        sky_conditions = []
         folder_path = './run_testing/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -285,19 +289,26 @@ class Exp_Main(Exp_Basic):
         self.model.eval()
         with torch.no_grad():
             
-            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark) in enumerate(test_loader):
+            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark,
+                    batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(test_loader):
                  
                 outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
  
                 outputs = outputs.cpu().numpy()
                 batch_y = batch_y.cpu().numpy()
 
+                batch_datetime_y = batch_datetime_y.float().to(self.device)
+                batch_sky_condition = batch_sky_condition.float().to(self.device)
+
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
 
                 preds.append(pred)
                 trues.append(true)
-                inputx.append(batch_x.detach().cpu().numpy()) 
+                inputx.append(batch_x.detach().cpu().numpy())
+
+                datetimes.append(batch_datetime_y.cpu())
+                sky_conditions.append(batch_sky_condition.cpu())
                  
                 if i % 1000 == 0:
                     input = batch_x.detach().cpu().numpy()
@@ -312,6 +323,8 @@ class Exp_Main(Exp_Basic):
         ###################
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
+        datetimes = np.concatenate(datetimes, axis=0)
+        sky_conditions = np.concatenate(sky_conditions, axis=0)
 
         preds_rev_list = []
         trues_rev_list = []
@@ -355,6 +368,27 @@ class Exp_Main(Exp_Basic):
         result_dict["trues"] = trues
         result_dict["preds_rev"] = preds_rev_list
         result_dict["trues_rev"] = trues_rev_list
+        result_dict['datetime'] = datetimes
+
+        # Initialize lists to store individual sky condition components
+        sky_condition_kbar = []
+        sky_condition_poc = []
+
+        for batch in sky_conditions:
+            # Each batch contains sub-arrays, extract kbar and poc from each and store them
+            kbars = [item[0] for item in batch]
+            pocs = [item[1] for item in batch]
+
+            sky_condition_kbar.extend(kbars)
+            sky_condition_poc.extend(pocs)
+
+        # Convert lists to numpy arrays if further numerical processing is needed
+        sky_condition_kbar = np.array(sky_condition_kbar)
+        sky_condition_poc = np.array(sky_condition_poc)
+
+        # Add these to your result_dict
+        result_dict['sky_condition_kbar'] = sky_condition_kbar
+        result_dict['sky_condition_poc'] = sky_condition_poc
          
 
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
@@ -372,5 +406,25 @@ class Exp_Main(Exp_Basic):
                 f.write("%s,%s\n"%(key,stats_dict[key]))
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
+
+        with open(os.path.join(folder_path, 'result_dict.csv'), 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(result_dict.keys())
+
+            # Find the maximum length among the values
+            max_length = max(len(value) for value in result_dict.values())
+
+            # Iterate over the range of max_length and write each row
+            for i in range(max_length):
+                row = []
+                for value in result_dict.values():
+                    if i < len(value):
+                        if isinstance(value[i], (list, np.ndarray)):
+                            row.append(str(value[i][0]))  # Take the first element of the array
+                        else:
+                            row.append(str(value[i]))
+                    else:
+                        row.append('')
+                writer.writerow(row)
         return total_MAE_rev
 
