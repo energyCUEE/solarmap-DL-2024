@@ -29,9 +29,11 @@ def get_gradients(model):
     max_grads = []
     for name, pp in named_parameters:
         if(pp.requires_grad) and ("bias" not in name):
-            layers.append(name)   
+        
             abs_grads.append(pp.grad.abs().mean().cpu().numpy())
             max_grads.append(pp.grad.abs().max().cpu().numpy())
+            layers.append(name)   
+
 
     return abs_grads, max_grads, layers
 
@@ -43,6 +45,8 @@ def plot_gradient_mean_and_max_for_each_layer(abs_grads, max_grads, layers, file
         fig_size_width = int(15 * len(abs_grads)/8) 
     else:
         fig_size_width = 15
+
+    plt.close("all")  
 
     fig = plt.figure(figsize=(fig_size_width, 8))  
     fig.subplots_adjust(bottom=0.2) 

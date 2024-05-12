@@ -5,6 +5,12 @@ import time
 import os
 import pdb
 import csv
+
+MEANING_PARAM = {}
+MEANING_PARAM["d_model"]    = "#Hidden" 
+MEANING_PARAM["e_layers"]   = "#LSMTCell/#Layers" 
+MEANING_PARAM["seq_length"] = "#lags" 
+
 plt.switch_backend('agg')
 
 
@@ -94,6 +100,7 @@ def visual(true, preds=None, name='./pic/test.pdf'):
     """
     Results visualization
     """
+    plt.close("all")  
     plt.figure()
     plt.plot(true, label='GroundTruth', linewidth=2)
     if preds is not None:
@@ -142,7 +149,7 @@ def set_folder_name(args, ii):
     dropout_argument = ("%.2f" % args.dropout).replace(".","p")
 
     if args.model == "PatchTST":
-        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
         args.model,
         args.data,
         args.moving_avg,
@@ -159,6 +166,7 @@ def set_folder_name(args, ii):
         args.d_layers,
         args.d_ff,
         args.factor,
+        args.embed_type,
         args.embed,
         args.distil,
         dropout_argument,
@@ -167,7 +175,7 @@ def set_folder_name(args, ii):
         ii)
 
     else: 
-        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
         args.model,
         args.data,
         args.moving_avg,
@@ -182,6 +190,7 @@ def set_folder_name(args, ii):
         args.d_layers,
         args.d_ff,
         args.factor,
+        args.embed_type,
         args.embed,
         args.distil,
         dropout_argument,
@@ -193,28 +202,33 @@ def set_folder_name(args, ii):
 
 def get_folder_name(settings): 
 
-    dataset    = settings["dataset"]
-    seq_length = settings["seq_length"]
-    pred_length = settings["pred_length"]
-    dropout = settings["dropout"]
-    model_name  = settings["network"] 
-    dataset     = settings["dataset"] 
+    
+    model_name    = settings["network"]
+    dataset       = settings["dataset"] 
+
     moving_average = settings["moving_average"] 
-    mode  = settings["feature_mode"] 
-    enc   = settings["enc_in"]   
-    ll    = settings["label_len"]   
-    dm    = settings["d_model"] 
-    nh    = settings["n_heads"]  
-    el    = settings["e_layers"]  
-    dl    = settings["d_layers"] 
-    d_ff    = settings["d_ff"]
-    fc    = settings["factor"]  
+    mode           = settings["feature_mode"] 
+    enc            = settings["enc_in"]   
+
+    seq_length     = settings["seq_length"]
+    ll             = settings["label_len"]  
+    pred_length    = settings["pred_length"]
+ 
+    dm            = settings["d_model"] 
+    nh            = settings["n_heads"]  
+    el            = settings["e_layers"]  
+    dl            = settings["d_layers"] 
+    d_ff          = settings["d_ff"]
+    fc            = settings["factor"]  
     time_embeding = settings["time_embeding"]  
-    loss = settings["loss"] 
-    dp   = ("%.02f" % settings["dropout"]).replace(".","p")
+    ebtype        = settings["embed_type"]  
+    distill       =  settings["distil"]  
+    dp            = ("%.02f" % settings["dropout"]).replace(".","p")
+    des           = settings["des"]
+    loss          = settings["loss"] 
  
 
-    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_ebtime%s_dtTrue_dp%s_Exp_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, time_embeding, dp, loss)
+    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_etype%d_ebtime%s_dt%s_dp%s_%s_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, ebtype, time_embeding, distill, dp, des, loss)
 
 
 def get_folders_list(settings, tuning_param, value_list): 
@@ -262,3 +276,93 @@ def plotting_seasonal_data(y, ref_y=None, filename=None, title=None):
     if filename is not None:
         plt.savefig(filename)
     plt.show()
+
+
+def collecting_tuning_param(folder_list, tuning_param, value_list,  which_input_dataset="valid"):
+
+    checkpoint_folder_path = "checkpoints" 
+
+    if which_input_dataset == "valid": 
+        val_folder_path = "valids" 
+    elif which_input_dataset == "test": 
+        val_folder_path = "results"
+        
+     
+    el_list = []
+    d_model = []
+    n_param = []
+    overall_mae_list = []
+    overall_mse_list = []
+
+    for folder_, value_ in zip(folder_list, value_list):
+        setting_path_csv       = os.path.join(checkpoint_folder_path, folder_, "model_setting.csv")
+        result_stat_path_csv   = os.path.join(val_folder_path, folder_, "stats.csv")
+        
+        with open(setting_path_csv) as csv_file:
+            d_reader = csv.reader(csv_file)
+            d_dict   = dict(d_reader)
+
+        with open(result_stat_path_csv) as csv_file:
+            stat_reader = csv.reader(csv_file)
+            stat_dict   = dict(stat_reader)
+
+
+        el_list.append(int(d_dict["e_layers"])) 
+        d_model.append(int(d_dict["d_model"]))
+        n_param.append(int(d_dict["Num-param"])) 
+        overall_mae_list.append(float(stat_dict["mae-overall"]))
+        overall_mse_list.append(float(stat_dict["rmse-overall"]))
+
+        print("%s @ %s [%.1f] MAE %f" % (folder_, tuning_param, value_, float(stat_dict["mae-overall"])) )
+    
+    return value_list, overall_mae_list, n_param
+
+
+
+def plot_tuning_param_mae(settings, value_list, overall_mae_list, n_param, tuning_param,  which_input_dataset="valid", meaning_param = MEANING_PARAM): 
+    
+    
+    which_input_dataset = "valid"
+
+    if which_input_dataset == "valid": 
+        val_folder_path = "valids" 
+    elif which_input_dataset == "test": 
+        val_folder_path = "results"
+        
+    
+    plt.close("all")  
+
+    fig, ax1 = plt.subplots(figsize=(15, 5)) 
+
+    ax1.plot(value_list, overall_mae_list, color='red', linewidth=2)  
+    ax1.set_xlabel(meaning_param[tuning_param], fontsize = 'large', color='red')
+    ax1.set_ylabel('MAE', fontsize = 'large')
+    ax1.tick_params(axis='x', colors='red')
+    ax1.grid(which='major', color='red', linewidth=0.8)
+
+    ax2 = ax1.twiny()
+    ax2.set_xlim(ax1.get_xlim())
+    ax2.set_xlabel('# params', fontsize='large', color='green')   
+    ax2.tick_params(axis='x', colors='green') 
+    ax2.set_xticks(value_list)
+    ax2.set_xticklabels(n_param)
+    ax2.grid(which='major', color='green', linestyle='--', linewidth=1)
+
+    if tuning_param == "seq_length":
+        text = "#Hidden=%d & #LSMTCell/Layers=%d" % (settings["d_model"], settings["e_layers"])
+
+    elif tuning_param == "d_model":
+        text = "#Lags=%d & #LSMTCell/Layers=%d" % (settings["seq_length"], settings["e_layers"])
+
+    elif tuning_param == "e_layers":
+        text = "#Lags=%d & #Hidden=%d" % (settings["seq_length"], settings["d_model"])
+
+    if val_folder_path == "valids":
+        plt.title("%s --- %s @ Validation set" % (settings["network"], text))
+        plt.tight_layout()
+        plt.savefig("%s_%s_sq%d_p%d_validate_tuning-%s-%d-%d.png" % (settings["network"], settings["dataset"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 
+
+    elif val_folder_path == "results":
+        plt.title("Test set")
+        plt.tight_layout()
+        plt.savefig("%s_%s_sq%d_p%d_test_tuning-%s-%d-%d.png" % (settings["network"], settings["dataset"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 

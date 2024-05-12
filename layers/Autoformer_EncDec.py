@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import pdb
 
 class my_Layernorm(nn.Module):
     """
@@ -41,12 +41,12 @@ class series_decomp(nn.Module):
     Series decomposition block
     """
     def __init__(self, kernel_size):
-        super(series_decomp, self).__init__()
+        super(series_decomp, self).__init__() 
         self.moving_avg = moving_avg(kernel_size, stride=1)
 
     def forward(self, x):
-        moving_mean = self.moving_avg(x)
-        res = x - moving_mean
+        moving_mean = self.moving_avg(x) 
+        res = x   - moving_mean
         return res, moving_mean
 
 
@@ -59,7 +59,7 @@ class EncoderLayer(nn.Module):
         d_ff = d_ff or 4 * d_model
         self.attention = attention
         self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1, bias=False)
-        self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1, bias=False)
+        self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1, bias=False) 
         self.decomp1 = series_decomp(moving_avg)
         self.decomp2 = series_decomp(moving_avg)
         self.dropout = nn.Dropout(dropout)

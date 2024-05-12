@@ -20,7 +20,7 @@ class Model(nn.Module):
         self.d_target = configs.d_target
 
         # Embedding
-        if configs.embed_type == 0:
+        if configs.embed_type == 0: # embed_type = 1 is default
             self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq,
                                             configs.dropout)
             self.dec_embedding = DataEmbedding(configs.dec_in, configs.d_model, configs.embed, configs.freq,
@@ -44,9 +44,10 @@ class Model(nn.Module):
         elif configs.embed_type == 4:
             self.enc_embedding = DataEmbedding_wo_pos_temp(configs.enc_in, configs.d_model, configs.embed, configs.freq,
                                                     configs.dropout)
-            self.dec_embedding = DataEmbedding_wo_pos_temp(configs.dec_in, configs.d_model, configs.embed, configs.freq,
-                                                    configs.dropout)
+            self.dec_embedding = DataEmbedding_wo_pos_temp(configs.dec_in, configs.d_model, configs.embed, configs.freq, configs.dropout) 
+        
         # Encoder
+
         self.encoder = Encoder(
             [
                 EncoderLayer(
@@ -98,8 +99,7 @@ class Model(nn.Module):
         # x_mark_dec.shape = 16 x 1 x 4  = B x Pred_Length X 4 
         enc_out = self.enc_embedding(x_enc, x_mark_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
- 
-         
+  
         dec_out = self.dec_embedding(x_dec, x_mark_dec) 
  
         dec_out = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)

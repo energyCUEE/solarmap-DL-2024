@@ -10,7 +10,7 @@ import numpy as np
 
 from layers.PatchTST_backbone import PatchTST_backbone
 from layers.PatchTST_layers import series_decomp
-
+import pdb
 
 class Model(nn.Module):
     def __init__(self, configs, max_seq_len:Optional[int]=1024, d_k:Optional[int]=None, d_v:Optional[int]=None, norm:str='BatchNorm', attn_dropout:float=0., 
@@ -44,6 +44,8 @@ class Model(nn.Module):
         
         decomposition = configs.decomposition
         kernel_size = configs.kernel_size
+
+        self.d_target = configs.d_target
         
         
         # model
@@ -75,7 +77,8 @@ class Model(nn.Module):
                                   pe=pe, learn_pe=learn_pe, fc_dropout=fc_dropout, head_dropout=head_dropout, padding_patch = padding_patch,
                                   pretrain_head=pretrain_head, head_type=head_type, individual=individual, revin=revin, affine=affine,
                                   subtract_last=subtract_last, verbose=verbose, **kwargs)
-    
+
+        self.fc         = nn.Linear(in_features=c_in, out_features=self.d_target)
     
     def forward(self, x):           # x: [Batch, Input length, Channel]
         if self.decomposition:
@@ -89,4 +92,6 @@ class Model(nn.Module):
             x = x.permute(0,2,1)    # x: [Batch, Channel, Input length]
             x = self.model(x)
             x = x.permute(0,2,1)    # x: [Batch, Input length, Channel]
+ 
+        x = self.fc(x) 
         return x
