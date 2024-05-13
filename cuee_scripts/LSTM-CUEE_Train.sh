@@ -21,11 +21,11 @@ num_features=11
 model_name=RLSTM 
 d_model=16
 e_layer=5
-
-for d_model in 16 32 
+is_training=0
+for d_model in 16 
 do 
 python -u run_longExp.py \
-    --is_training 1 \
+    --is_training $is_training \
     --root_path ./dataset/CUEE_PMAPS_NIGHT/ \
     --test_data_path pmaps_test_with_nighttime.csv \
     --valid_data_path pmaps_validate_with_nighttime.csv \

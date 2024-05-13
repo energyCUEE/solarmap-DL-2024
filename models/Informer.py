@@ -99,6 +99,7 @@ class Model(nn.Module):
         # x_mark_dec.shape = 16 x 1 x 4  = B x Pred_Length X 4
         enc_out = self.enc_embedding(x_enc, x_mark_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
+ 
         dec_out = self.dec_embedding(x_dec, x_mark_dec)
 
         dec_out = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)

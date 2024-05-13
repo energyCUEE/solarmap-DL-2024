@@ -218,6 +218,7 @@ class DatasetCUEE(data.Dataset):
             # cols_data  = df_raw.columns[1:]   
             df_data_x    = df_raw[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
             df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
+            
             df_data_y    = df_raw[[self.target]]  
 
             df_raw_sky_condition = df_raw.copy()
@@ -394,7 +395,7 @@ class DatasetCUEE(data.Dataset):
 
         seq_x = self.h5file["seq_x"][index] 
         seq_y = self.h5file["seq_y"][index] 
-        seq_v = self.h5file["seq_y"][index]
+        seq_v = self.h5file["seq_v"][index]
         seq_sky_condition = self.h5file["seq_sky_condition"][index]
 
         seq_x_mark = self.h5file["seq_x_mark"][index] 

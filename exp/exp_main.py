@@ -71,18 +71,19 @@ class Exp_Main(Exp_Basic):
             criterion = nn.L1Loss()
         return criterion
     
-    def __myfeedforward(self, batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark):
+    def __myfeedforward(self, batch_x, batch_v, batch_x_mark, batch_v_mark):
 
-        batch_x = batch_x.float().to(self.device)
-        batch_y = batch_y.float()
+        batch_x = batch_x.float().to(self.device) 
         batch_v = batch_v.float().to(self.device)
  
 
-        batch_size, pred_len, pred_feature = batch_y.shape
+        batch_size, _, _ = batch_x.shape
 
-        batch_x_mark = batch_x_mark.float().to(self.device)
-        batch_y_mark = batch_y_mark.float().to(self.device)
-        batch_v_mark = batch_v_mark.float().to(self.device)
+        batch_x_mark = batch_x_mark.float().to(self.device) 
+        batch_v_mark = batch_v_mark.float().to(self.device) 
+
+        pred_len = self.args.pred_len
+        pred_feature = self.args.d_target
 
         # decoder input
         # dec_inp = batch_v
@@ -100,9 +101,8 @@ class Exp_Main(Exp_Basic):
                 outputs = self.model(batch_x, batch_x_mark, batch_v, batch_v_mark)  
          
         outputs = outputs.view(batch_size, pred_len, pred_feature)   ###### <<<<
-        batch_y = batch_y.to(self.device)  
 
-        return outputs, batch_y 
+        return outputs 
 
 
     def train(self, setting):
@@ -157,7 +157,9 @@ class Exp_Main(Exp_Basic):
                 iter_count += 1
                 model_optim.zero_grad()
                 
-                outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
+                outputs = self.__myfeedforward(batch_x,  batch_v, batch_x_mark, batch_v_mark)
+
+                batch_y = batch_y.to(self.device)  
 
                 loss    = criterion(outputs, batch_y)
                 train_loss.append(loss.item())
@@ -177,7 +179,7 @@ class Exp_Main(Exp_Basic):
                         adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                         scheduler.step()
 
-                pbar.set_description("iters: {0}, epoch: {1} | loss: {2:.7f}".format(i, epoch, loss.item())) 
+                pbar.set_description("iters: {0}, epoch: {1} | loss: {2:.7f}".format(i, epoch, sum(train_loss)/(len(train_loss)+1))) 
              
             plot_gradients(self.model,os.path.join(path, 'gradflow-@-ep-%03d.png' % epoch)) 
             
@@ -236,8 +238,9 @@ class Exp_Main(Exp_Basic):
 
             for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(vali_loader):  ###### <<<<
                 
-                outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
+                outputs = self.__myfeedforward(batch_x,  batch_v, batch_x_mark, batch_v_mark)
 
+                batch_y = batch_y.to(self.device)  
 
                 pred = outputs.detach().cpu()
                 true = batch_y.detach().cpu() 
@@ -292,12 +295,11 @@ class Exp_Main(Exp_Basic):
         with torch.no_grad():
             
             for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(test_loader):
-
-
-                outputs, batch_y = self.__myfeedforward(batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark)
+ 
+                outputs, batch_y = self.__myfeedforward(batch_x, batch_v, batch_x_mark, batch_v_mark)
  
                 outputs = outputs.cpu().numpy()
-                batch_y = batch_y.cpu().numpy()
+                batch_y = batch_y.numpy()
 
                 batch_datetime_y = batch_datetime_y.float().to(self.device)
                 batch_sky_condition = batch_sky_condition.float().to(self.device)

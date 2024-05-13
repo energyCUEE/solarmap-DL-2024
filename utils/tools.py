@@ -243,15 +243,20 @@ def get_folders_list(settings, tuning_param, value_list):
     return folder_list
 
 
-def plot_axis(ax, y, ref_y=None, ylabel=None, title=None):
+def plot_axis(ax, y, ref_y=None, ylabel=None, title=None, error=None):
 
-    ax.plot(y, '-', color='red', alpha=0.99, linewidth=2.0) 
+    line1 = ax.plot(y, '-', color='red', alpha=0.99, linewidth=2.0) 
+    
     if ref_y is not None:
-        ax.plot(ref_y, '--', color='blue', alpha=0.99, linewidth=2.0) 
+        
+        line2 = ax.plot(ref_y, '--', color='black', alpha=0.99, linewidth=2.0)  
+
+        if error is not None:
+            text ="MAE:%.2f" % error
+            ax.text(800, 0.8*np.max(ref_y[~np.isnan(ref_y)]), text, color='red', bbox=dict(facecolor='white', edgecolor='red'))
     
     if ylabel is not None:
-        ax.set_ylabel(ylabel)
-    
+        ax.set_ylabel(ylabel) 
     if title is not None:
         ax.set_title(title)
 
@@ -278,6 +283,52 @@ def plotting_seasonal_data(y, ref_y=None, filename=None, title=None):
     if filename is not None:
         plt.savefig(filename)
     plt.show()
+
+
+
+def calculate_residual_decom(y, ref_y):
+    residual = {}
+    residual["Observation"] = mean_absolute_error(y.observed, ref_y.observed)
+
+    y_trend = y.trend
+    y_trend = y_trend[~np.isnan(y_trend)]
+    ref_y_trend = ref_y.trend
+    ref_y_trend = ref_y_trend[~np.isnan(ref_y_trend)] 
+    residual["Trend"] = mean_absolute_error(y_trend, ref_y_trend)
+
+    y_seasonal = y.seasonal
+    y_seasonal = y_seasonal[~np.isnan(y_seasonal)]
+    ref_y_seasonal = ref_y.seasonal
+    ref_y_seasonal = ref_y_seasonal[~np.isnan(ref_y_seasonal)] 
+    residual["Seasonal"] = mean_absolute_error(y_seasonal, ref_y_seasonal)
+
+    y_resid = y.resid
+    y_resid = y_resid[~np.isnan(y_resid)]
+    ref_y_resid = ref_y.resid
+    ref_y_resid = ref_y_resid[~np.isnan(ref_y_resid)]    
+    residual["Residual"] = mean_absolute_error(y_resid, ref_y_resid)
+    return residual
+
+
+
+def plotting_seasonal_data_wrt_gt(y, ref_y=None, filename=None, title=None, residual=None): 
+    fig, axs = plt.subplots(4, 1, figsize=(12, 10))
+    if residual is not None:
+        plot_axis(axs[0], y.observed, ref_y.observed, ylabel="Observation", title=title, error = residual["Observation"])
+        plot_axis(axs[1], y.trend,    ref_y.trend, ylabel="Trend", error = residual["Trend"])
+        plot_axis(axs[2], y.seasonal, ref_y.seasonal, ylabel="Seasonal", error = residual["Seasonal"])
+        plot_axis(axs[3], y.resid,    ref_y.resid, ylabel="Residual", error = residual["Residual"]) 
+    else:
+        plot_axis(axs[0], y.observed, ref_y.observed, ylabel="Observation", title=title   )
+        plot_axis(axs[1], y.trend,    ref_y.trend, ylabel="Trend" )
+        plot_axis(axs[2], y.seasonal, ref_y.seasonal, ylabel="Seasonal" )
+        plot_axis(axs[3], y.resid,    ref_y.resid, ylabel="Residual") 
+    
+    plt.tight_layout()
+    if filename is not None:
+        plt.savefig(filename)
+    plt.show()
+
 
 
 def collecting_tuning_param(folder_list, tuning_param, value_list,  which_input_dataset="valid"):

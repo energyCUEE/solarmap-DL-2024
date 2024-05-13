@@ -21,7 +21,7 @@ model_name=Autoformer # Transformer
 e_layer=4
 embed_type=4
 
-for d_model in 8 16 32 64 
+for d_model in 16 
 do
 python -u run_longExp.py \
     --is_training 1 \
@@ -45,7 +45,7 @@ python -u run_longExp.py \
     --d_layers   1 \
     --factor     3 \
     --enc_in    $num_features \
-    --dec_in    1 \
+    --dec_in    $num_features \
     --c_out     $num_features \
     --des       'Exp' \
     --loss      'mse' \

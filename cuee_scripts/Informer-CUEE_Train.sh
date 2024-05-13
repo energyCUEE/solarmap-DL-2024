@@ -19,10 +19,10 @@ num_features=11
 
 model_name=Informer 
 e_layer=4
-embed_type=2
+embed_type=4
 is_training=1 # Set to 0 to train... 
 
-for d_model in 8 16 32 64
+for d_model in 16
 do
 python -u run_longExp.py \
     --is_training $is_training \
@@ -46,10 +46,11 @@ python -u run_longExp.py \
     --d_layers   1 \
     --factor     3 \
     --enc_in $num_features \
-    --dec_in 1 \
+    --dec_in $num_features \
     --c_out  $num_features \
     --des 'Exp' \
-    --loss 'mse' \
+    --loss 'l1' \
+    --scheduler 'ReduceLROnPlateau' \
     --train_epochs 10 \
     --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done

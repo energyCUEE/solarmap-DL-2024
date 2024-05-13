@@ -57,7 +57,7 @@ class Model(nn.Module):
             
 
         self.fc1 =nn.Linear(configs.enc_in, configs.dec_in, bias=True) 
-        self.fc2 =nn.Linear(configs.enc_in, configs.dec_in, bias=True) 
+        self.fc2 =nn.Linear(configs.enc_in, configs.d_target, bias=True) 
         # Encoder
         self.encoder = Encoder(
             [
