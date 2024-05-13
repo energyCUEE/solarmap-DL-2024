@@ -284,10 +284,11 @@ class DatasetCUEE(data.Dataset):
         with open(os.path.join(self.folder , "date_time_y_list.npy"), 'rb') as fp:
             self.date_time_y_list  = pickle.load(fp) 
 
-        print("Read %s" % os.path.join(self.folder, "sky_condition_list.npy"))
-        with  open(os.path.join(self.folder , "sky_condition_list.npy"), 'rb') as fp:
-            self.seq_sky_condition_list  = pickle.load(fp)
-
+        # print("Read %s" % os.path.join(self.folder, "sky_condition_list.npy"))
+        # with  open(os.path.join(self.folder , "sky_condition_list.npy"), 'rb') as fp:
+        #     self.seq_sky_condition_list  = pickle.load(fp)
+ 
+        
     def __save_list_to_file(self): 
 
         
@@ -296,7 +297,8 @@ class DatasetCUEE(data.Dataset):
             h5f.create_dataset("seq_x", data=np.asarray(self.seq_x_list) )
             h5f.create_dataset("seq_y", data=np.asarray(self.seq_y_list) )
             h5f.create_dataset("seq_v", data=np.asarray(self.seq_v_list) )
-            h5f.create_dataset("seq_sky_condition", data=np.asarray(self.seq_sky_condition_list))
+ 
+            h5f.create_dataset("seq_sky_condition", data=np.asarray(self.seq_sky_condition_list).astype(np.float32))
 
             h5f.create_dataset("seq_x_mark", data=np.asarray(self.seq_x_mark_list) )
             h5f.create_dataset("seq_y_mark", data=np.asarray(self.seq_y_mark_list) )
@@ -311,9 +313,9 @@ class DatasetCUEE(data.Dataset):
         with open(os.path.join(self.folder , "date_time_y_list.npy"), 'wb') as fp:
             pickle.dump(self.date_time_y_list, fp) 
     
-        print("save %s" % os.path.join(self.folder , "sky_condition_list.npy"))
-        with open(os.path.join(self.folder , "sky_condition_list.npy"), 'wb') as fp:
-            pickle.dump(self.seq_sky_condition_list, fp)
+        # print("save %s" % os.path.join(self.folder , "sky_condition_list.npy"))
+        # with open(os.path.join(self.folder , "sky_condition_list.npy"), 'wb') as fp:
+        #     pickle.dump(self.seq_sky_condition_list, fp)
 
     def __stacked_to_daily_seq(self, data_x, data_y, data_v, data_stamp, df_stamp, df_data_sky_condition):
         
@@ -343,6 +345,7 @@ class DatasetCUEE(data.Dataset):
                     masked_data_v = data_v[mask_,:] 
                     masked_date_time = df_stamp['Datetime'].iloc[mask_] 
                     masked_data_stamp = data_stamp[mask_,:]
+ 
                     masked_data_sky_condition =  df_data_sky_condition[mask_,:]
                     num_sample_per_day = sum(mask_ == True) - self.seq_len - self.pred_len + 1 
  

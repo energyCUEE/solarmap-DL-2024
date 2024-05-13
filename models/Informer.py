@@ -44,8 +44,8 @@ class Model(nn.Module):
         elif configs.embed_type == 4:
             self.enc_embedding = DataEmbedding_wo_pos_temp(configs.enc_in, configs.d_model, configs.embed, configs.freq,
                                                     configs.dropout)
-            self.dec_embedding = DataEmbedding_wo_pos_temp(configs.dec_in, configs.d_model, configs.embed, configs.freq, configs.dropout) 
-        
+            self.dec_embedding = DataEmbedding_wo_pos_temp(configs.dec_in, configs.d_model, configs.embed, configs.freq, configs.dropout)
+
         # Encoder
 
         self.encoder = Encoder(
@@ -91,22 +91,21 @@ class Model(nn.Module):
 
         if configs.d_target is not None:
             self.final = nn.Linear(configs.enc_in, configs.d_target)
-                  
+
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
                 enc_self_mask=None, dec_self_mask=None, dec_enc_mask=None):
-        
+
         # x_dec.shape = 16 x 1 x 8       = B x Pred_Length X Feature
-        # x_mark_dec.shape = 16 x 1 x 4  = B x Pred_Length X 4 
+        # x_mark_dec.shape = 16 x 1 x 4  = B x Pred_Length X 4
         enc_out = self.enc_embedding(x_enc, x_mark_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
-  
-        dec_out = self.dec_embedding(x_dec, x_mark_dec) 
- 
+        dec_out = self.dec_embedding(x_dec, x_mark_dec)
+
         dec_out = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)
- 
-        if self.d_target is not None: 
+
+        if self.d_target is not None:
             dec_out = self.final(dec_out)
- 
+
         if self.output_attention:
             return dec_out[:, -self.pred_len:, :], attns
         else:

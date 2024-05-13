@@ -5,6 +5,8 @@ import time
 import os
 import pdb
 import csv
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import pandas as pd
 
 MEANING_PARAM = {}
 MEANING_PARAM["d_model"]    = "#Hidden" 
@@ -366,3 +368,73 @@ def plot_tuning_param_mae(settings, value_list, overall_mae_list, n_param, tunin
         plt.title("Test set")
         plt.tight_layout()
         plt.savefig("%s_%s_sq%d_p%d_test_tuning-%s-%d-%d.png" % (settings["network"], settings["dataset"], settings["seq_length"], settings["pred_length"], tuning_param, min(value_list), max(value_list))) 
+
+ 
+
+def evaluation_skycondition(folder):
+
+    
+    main_folder_path = "testing" 
+    stats_df = pd.read_csv(os.path.join(main_folder_path, folder, 'stats_mae_mse.csv')) 
+    df       = pd.read_csv(os.path.join(main_folder_path, folder, 'result_dict.csv'))  
+ 
+    df.drop(columns={'inputx', 'preds', 'trues'}, inplace=True)
+
+    df['datetime'] = pd.to_datetime(df['datetime'], unit='s')
+    df['datetime'] = df['datetime'].dt.tz_localize('UTC')
+    df['datetime'] = df['datetime'].dt.tz_convert('Asia/Bangkok')
+    df['datetime'] = df['datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    df['hour'] = pd.to_datetime(df['datetime']).dt.hour
+
+    df.rename(columns={'trues_rev': 'I', 'preds_rev': 'Ihat'}, inplace=True) 
+ 
+    overall_mae        = mean_absolute_error(df['I'], df['Ihat'])
+    overall_rmse       = np.sqrt(mean_squared_error(df['I'], df['Ihat']))
+    print(f'Overall MAE:  {overall_mae:.2f}')
+    print(f'Overall RMSE: {overall_rmse:.2f}')
+ 
+
+    df['sky_condition_kbar'] = df['average_k'].apply(
+        lambda x: 'cloudy' if x < 0.3 else ('partly_cloudy' if x < 0.6 else 'clear'))
+
+    sky_condition_mae  = df.groupby('sky_condition_kbar')[['I', 'Ihat']].apply(lambda x: mean_absolute_error(x['I'], x['Ihat'])).reset_index(name='MAE')
+    sky_condition_rmse = df.groupby('sky_condition_kbar')[['I', 'Ihat']].apply(lambda x: np.sqrt(mean_squared_error(x['I'], x['Ihat']))).reset_index(name='RMSE') 
+
+
+    print('MAE by sky_condition')
+    print(sky_condition_mae)
+
+    print('\nRMSE by sky_condition')
+    print(sky_condition_rmse)
+
+    stats_data = pd.concat([stats_df, sky_condition_mae, sky_condition_rmse], axis=0)
+    stats_data.to_csv(os.path.join(main_folder_path, setting, 'stats_mae_mbe_skycondition.csv'))
+
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharey='row')
+    sky_condition_names = ['Clear sky', 'Partly cloudy sky', 'Cloudy sky']
+
+    # Define three different color sets for each subplot
+    color_sets = [['#86A789', '#D2E3C8'], ['#22668D', '#8ECDDD'], ['#2D3250', '#7077A1']]
+
+    for i, condition in enumerate(['clear', 'partly_cloudy', 'cloudy']):
+        filter_test_df = df[df['sky_condition_kbar'] == condition]
+        mae = filter_test_df.groupby('hour')[['I', 'Ihat']].apply(lambda x: mean_absolute_error(x['I'], x['Ihat'])).reset_index(name='MAE')
+        mbe = filter_test_df.groupby('hour')[['I', 'Ihat']].apply(lambda x: x['Ihat'].mean() - x['I'].mean()).reset_index(
+            name='MBE')
+
+        # Use different color sets for each subplot
+        bar_colors_mae = [color_sets[i][0] if 10 <= hour <= 15 else color_sets[i][1] for hour in mae['hour']]
+        bar_colors_mbe = [color_sets[i][0] if 10 <= hour <= 15 else color_sets[i][1] for hour in mbe['hour']]
+
+        axes[0, i].bar(mae['hour'], mae['MAE'], color=bar_colors_mae)
+        axes[0, i].set_title(f'{sky_condition_names[i]} (n={len(filter_test_df)})', fontsize=20)
+        axes[0, i].set_xlabel('Hour', fontsize=20)
+        axes[0, i].set_ylabel('MAE [W/sqm]', fontsize=20)
+
+        axes[1, i].bar(mbe['hour'], mbe['MBE'], color=bar_colors_mbe)
+        axes[1, i].set_xlabel('Hour', fontsize=20)
+        axes[1, i].set_ylabel('MBE [W/sqm]', fontsize=20)
+
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.85)
+    plt.savefig(os.path.join(main_folder_path, folder, 'test_metric.png')) 

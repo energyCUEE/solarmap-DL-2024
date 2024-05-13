@@ -19,18 +19,27 @@ dataset    = DatasetCUEE(root_path= CUEE_ROOT,  test_data_path=PMAS_CUEE_TEST, v
 dataloader = DataLoader(dataset, batch_size=1)
 
 trues_rev_list = []
+input_list = []
  
 for data_i, data_ in enumerate(dataloader):
     seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark , date_time_x, date_time_y, seq_sky_condition = data_
-    pdb.set_trace()
-    trues_rev_list.append(dataset.inverse_transform_y(seq_y[:,0,:])) 
+
+    input_list.append(seq_x[:,-1, 0])  
+    trues_rev_list.append(seq_y[:,0,:]) 
+
+    #trues_rev_list.append(dataset.inverse_transform_y(seq_y[:,0,:])) 
         
     if data_i == 200:
  
         trues_rev_full = np.concatenate(trues_rev_list, axis=0) 
         trues_rev_ = trues_rev_full.reshape(-1,1) 
- 
-        plt.plot(trues_rev_, label='actual', color="black") 
+
+        input_list_full = np.concatenate(input_list, axis=0) 
+        input_list_     = input_list_full.reshape(-1,1) 
+
+        plt.plot(input_list_, label='input', color="blue") 
+        plt.plot(trues_rev_, label='y-gt', color="black") 
+        plt.legend()
         plt.savefig("First200.png")
         plt.show() 
         pdb.set_trace()

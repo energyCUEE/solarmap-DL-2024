@@ -37,10 +37,12 @@ class EncoderLayer(nn.Module):
         self.activation = F.relu if activation == "relu" else F.gelu
 
     def forward(self, x, attn_mask=None):
+
         new_x, attn = self.attention(
             x, x, x,
             attn_mask=attn_mask
         )
+
         x = x + self.dropout(new_x)
 
         y = x = self.norm1(x)
@@ -62,13 +64,16 @@ class Encoder(nn.Module):
         attns = []
         if self.conv_layers is not None:
             for attn_layer, conv_layer in zip(self.attn_layers, self.conv_layers):
+
                 x, attn = attn_layer(x, attn_mask=attn_mask)
                 x = conv_layer(x)
                 attns.append(attn)
+
             x, attn = self.attn_layers[-1](x)
             attns.append(attn)
         else:
             for attn_layer in self.attn_layers:
+
                 x, attn = attn_layer(x, attn_mask=attn_mask)
                 attns.append(attn)
 
@@ -94,10 +99,10 @@ class DecoderLayer(nn.Module):
         self.activation = F.relu if activation == "relu" else F.gelu
 
     def forward(self, x, cross, x_mask=None, cross_mask=None):
-        # 16x1x32 
+        # 16x1x32
         x = x + self.dropout(self.self_attention(x, x, x, attn_mask=x_mask)[0])
         x = self.norm1(x)
- 
+
         x = x + self.dropout(self.cross_attention(x, cross, cross, attn_mask=cross_mask)[0])
 
         y = x = self.norm2(x)

@@ -20,9 +20,9 @@ num_features=11
 
 model_name=RLSTM 
 d_model=16
-#e_layer=5
+e_layer=5
 
-for e_layer in 1 5 10 15 20 25 50 
+for d_model in 16 32 
 do 
 python -u run_longExp.py \
     --is_training 1 \

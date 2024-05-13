@@ -19,7 +19,7 @@ num_features=11
 
 model_name=RLSTM 
 d_model=50
-#e_layer=5
+e_layer=5
 
  
 python -u generation.py \

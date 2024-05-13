@@ -121,16 +121,18 @@ if __name__ == '__main__':
  
  
     if args.is_training:
+
         for ii in range(args.itr):
             setting = set_folder_name(args, ii)
 
             exp = Exp(args)  # set experiments
             print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting)) 
             
-            exp.train(setting) 
-
+            exp.train(setting)  
             print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
             exp.test(setting) 
+
+            exp.evaluation(setting)
 
             torch.cuda.empty_cache()
     else:
@@ -139,8 +141,12 @@ if __name__ == '__main__':
         setting = set_folder_name(args, ii)
 
         exp = Exp(args)  # set experiments
-        print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
-        exp.test(setting, test=1)
+        
+        print('>>>>>>> Testing    : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+        exp.test(setting)
+
+        print('>>>>>>> Evaluation : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
+        exp.evaluation(setting)
         
         torch.cuda.empty_cache()
         
