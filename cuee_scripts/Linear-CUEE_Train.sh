@@ -39,6 +39,8 @@ python -u run_longExp.py \
   --pred_len  $pred_len \
   --enc_in    $num_features \
   --des 'Exp' \
+  --loss 'l1' \
+  --scheduler 'ReduceLROnPlateau' \
   --train_epochs 10 \
   --itr 1 --batch_size $batch_size  --learning_rate 0.001 --individual  
   

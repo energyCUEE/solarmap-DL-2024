@@ -17,11 +17,11 @@ target=I
 feature_type=MS 
 num_features=11 
 
-model_name=Autoformer # Transformer 
-e_layer=4
-embed_type=4
-
-for d_model in 16 
+model_name=Transformer # Transformer Autoformer
+# e_layer=4
+embed_type=2
+d_model=16
+for e_layer in 2
 do
 python -u run_longExp.py \
     --is_training 1 \
@@ -48,7 +48,8 @@ python -u run_longExp.py \
     --dec_in    $num_features \
     --c_out     $num_features \
     --des       'Exp' \
-    --loss      'mse' \
+    --scheduler 'ReduceLROnPlateau' \
+    --loss      'l1' \
     --train_epochs 10 \
     --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done

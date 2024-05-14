@@ -21,9 +21,10 @@ num_features=11
 mode=val # test
 
 model_name=Informer 
-e_layer=4
+# e_layer=4
 embed_type=2
-for d_model in 4 8 16 32 64
+d_model=16
+for e_layer in 2 4 8 10
 do
 python -u infer_longExp.py \
     --mode $mode \

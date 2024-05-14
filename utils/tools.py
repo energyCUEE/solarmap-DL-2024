@@ -422,7 +422,7 @@ def plot_tuning_param_mae(settings, value_list, overall_mae_list, n_param, tunin
 
  
 
-def evaluation_skycondition(folder, condition_spit_sky_condition):
+def evaluation_skycondition(folder, condition_spit_sky_condition="k_bar"):
 
     
     main_folder_path = "testing" 
@@ -447,25 +447,23 @@ def evaluation_skycondition(folder, condition_spit_sky_condition):
         df['sky_condition'] = df['sky_condition_poc'].apply(
             lambda x: 'cloudy' if x == 3 else ('partly_cloudy' if x == 2 else 'clear'))
 
-    sky_condition_mae = df.groupby('sky_condition')[['I', 'Ihat']].apply(
-        lambda x: mean_absolute_error(x['I'], x['Ihat'])).reset_index(name='MAE')
-    sky_condition_rmse = df.groupby('sky_condition')[['I', 'Ihat']].apply(
-        lambda x: np.sqrt(mean_squared_error(x['I'], x['Ihat']))).reset_index(name='RMSE')
+    sky_condition_mae = df.groupby('sky_condition')[['I', 'Ihat']].apply(lambda x: mean_absolute_error(x['I'], x['Ihat'])).reset_index(name='MAE')
+    sky_condition_rmse = df.groupby('sky_condition')[['I', 'Ihat']].apply(lambda x: np.sqrt(mean_squared_error(x['I'], x['Ihat']))).reset_index(name='RMSE')
         
     overall_mae        = mean_absolute_error(df['I'], df['Ihat'])
     overall_rmse       = np.sqrt(mean_squared_error(df['I'], df['Ihat']))
-    print(f'Overall MAE:  {overall_mae:.2f}')
-    print(f'Overall RMSE: {overall_rmse:.2f}')
+    print('Overall MAE [%s]:  %.2f' % (condition_spit_sky_condition, overall_mae))
+    print('Overall RMSE [%s]: %.2f' % (condition_spit_sky_condition, overall_rmse))
     
-    print('MAE by sky_condition')
+    print('MAE by sky_condition [%s]' % condition_spit_sky_condition)
     print(sky_condition_mae)
 
-    print('\nRMSE by sky_condition')
+    print('\nRMSE by sky_condition [%s]' % condition_spit_sky_condition)
     print(sky_condition_rmse)
 
     # Save the metrics to a csv file
     stats_data = pd.concat([stats_df, sky_condition_mae, sky_condition_rmse], axis=0)
-    stats_data.to_csv(f'{stats_ckp_folder}/stats_mae_mbe_skycondition.csv')
+    stats_data.to_csv('%s/stats_mae_mbe_skycondition-%s.csv' % (stats_ckp_folder, condition_spit_sky_condition))
 
     fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharey='row')
     sky_condition_names = ['Clear sky', 'Partly cloudy sky', 'Cloudy sky']
@@ -495,4 +493,4 @@ def evaluation_skycondition(folder, condition_spit_sky_condition):
          
     fig.tight_layout()
     fig.subplots_adjust(top=0.85)
-    plt.savefig(os.path.join(main_folder_path, folder, 'test_metric.png')) 
+    plt.savefig(os.path.join(stats_ckp_folder, 'test_metric-%s.png' % condition_spit_sky_condition)) 

@@ -18,11 +18,11 @@ feature_type=MS
 num_features=11 
 
 model_name=Informer 
-e_layer=4
-embed_type=4
+# e_layer=4
+embed_type=2
 is_training=1 # Set to 0 to train... 
-
-for d_model in 16
+d_model=16
+for e_layer in 2 #
 do
 python -u run_longExp.py \
     --is_training $is_training \

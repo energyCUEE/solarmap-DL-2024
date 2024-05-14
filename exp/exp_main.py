@@ -90,7 +90,7 @@ class Exp_Main(Exp_Basic):
         # dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
         # dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
         # encoder - decoder
-
+ 
         if 'Linear' in self.args.model or 'TST' in self.args.model or "RLSTM" in self.args.model:
             outputs = self.model(batch_x)
         
@@ -156,10 +156,11 @@ class Exp_Main(Exp_Basic):
             
                 iter_count += 1
                 model_optim.zero_grad()
-                
+ 
+                 
                 outputs = self.__myfeedforward(batch_x,  batch_v, batch_x_mark, batch_v_mark)
 
-                batch_y = batch_y.to(self.device)  
+                batch_y = batch_y.float().to(self.device)  
 
                 loss    = criterion(outputs, batch_y)
                 train_loss.append(loss.item())
@@ -240,7 +241,7 @@ class Exp_Main(Exp_Basic):
                 
                 outputs = self.__myfeedforward(batch_x,  batch_v, batch_x_mark, batch_v_mark)
 
-                batch_y = batch_y.to(self.device)  
+                batch_y = batch_y.float().to(self.device)  
 
                 pred = outputs.detach().cpu()
                 true = batch_y.detach().cpu() 
@@ -285,6 +286,8 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
         inputx = []
+        datetimes = []
+        sky_conditions = []
         folder_path = './run_testing/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -294,7 +297,7 @@ class Exp_Main(Exp_Basic):
             
             for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(test_loader):
  
-                outputs, batch_y = self.__myfeedforward(batch_x, batch_v, batch_x_mark, batch_v_mark)
+                outputs = self.__myfeedforward(batch_x, batch_v, batch_x_mark, batch_v_mark)
  
                 outputs = outputs.cpu().numpy()
                 batch_y = batch_y.numpy()
@@ -305,7 +308,8 @@ class Exp_Main(Exp_Basic):
                 preds.append(pred)
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy()) 
-                 
+                datetimes.append(batch_datetime_y) 
+                sky_conditions.append(batch_sky_condition)
                 if i % 1000 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
@@ -411,6 +415,6 @@ class Exp_Main(Exp_Basic):
 
 
 
-    def evaluation(self, foldername):
+    def evaluation(self, foldername, condition_spit_sky_condition="k_bar"):
         
-        evaluation_skycondition(foldername)
+        evaluation_skycondition(foldername, condition_spit_sky_condition=condition_spit_sky_condition)

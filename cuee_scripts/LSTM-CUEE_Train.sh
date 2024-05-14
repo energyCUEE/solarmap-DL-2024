@@ -9,7 +9,7 @@ fi
 pred_len=1
 label_len=0  
 moving_avg=4
-batch_size=16
+batch_size=32
 seq_len=4
 target=I
 
@@ -21,7 +21,7 @@ num_features=11
 model_name=RLSTM 
 d_model=16
 e_layer=5
-is_training=0
+is_training=1
 for d_model in 16 
 do 
 python -u run_longExp.py \

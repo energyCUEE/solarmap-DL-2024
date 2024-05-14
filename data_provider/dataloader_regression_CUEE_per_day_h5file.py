@@ -21,7 +21,7 @@ PMAS_CUEE_TEST  = "pmaps_test_data.csv"
 PMAS_CUEE_VALID = "pmaps_validate_data.csv"
 PMAS_CUEE_TRAIN = "pmaps_train_data.csv"
 
-SUFFIX_SAVED_FILES_LIST = ["data.h5", "date_time_x_list.npy", "date_time_y_list.npy", "sky_condition_list.npy"]
+SUFFIX_SAVED_FILES_LIST = ["data.h5", "date_time_x_list.npy", "date_time_y_list.npy" ]
 
 def npdatetime_to_string(numpy_array):   
     list_str = np.datetime_as_string(numpy_array, unit='s').tolist()
@@ -212,13 +212,13 @@ class DatasetCUEE(data.Dataset):
             
             # scaling  
             train_data_x = df_raw_train[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            train_data_v = df_raw_train[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
+            train_data_v = df_raw_train[['Iclr', 'CI', 'R', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']] 
             train_data_y = df_raw_train[[self.target]]  
             
             # The last attribute is also a target attribute ...  
             # cols_data  = df_raw.columns[1:]   
             df_data_x    = df_raw[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
+            df_data_v    = df_raw[['Iclr', 'CI', 'R', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']] 
             
             df_data_y    = df_raw[[self.target]]  
 
@@ -293,7 +293,7 @@ class DatasetCUEE(data.Dataset):
         
     def __save_list_to_file(self): 
 
-        
+        print("save %s" % os.path.join(self.folder , "data.h5")) 
         with h5py.File( os.path.join(self.folder , 'data.h5'),'w') as h5f:
 
             h5f.create_dataset("seq_x", data=np.asarray(self.seq_x_list) )
@@ -365,11 +365,10 @@ class DatasetCUEE(data.Dataset):
                         
                         seq_x = masked_data_x[s_begin:s_end, :]
 
-                        if self.label_len < 1:
-                            seq_v = torch.zeros(self.pred_len, masked_data_x.shape[-1]) # 1 x Feat size
-                        else:
-                            seq_v = masked_data_v[ov_begin:ov_end, :] 
-                            
+                        # if self.label_len < 1:
+                        #     seq_v = torch.zeros(self.pred_len, masked_data_x.shape[-1]) # 1 x Feat size
+                        # else: 
+                        seq_v  = masked_data_v[ov_begin:ov_end, :]   
                         seq_y  = masked_data_y[r_begin:r_end, :] 
                         seq_sky_condition = masked_data_sky_condition[r_begin:r_end, :]
  
@@ -382,8 +381,8 @@ class DatasetCUEE(data.Dataset):
                         date_time_y = masked_date_time[r_begin:r_end]
 
                         self.seq_x_list.append(seq_x)
-                        self.seq_y_list.append(seq_y)
                         self.seq_v_list.append(seq_v)
+                        self.seq_y_list.append(seq_y)
                         self.seq_sky_condition_list.append(seq_sky_condition) 
 
                         self.seq_x_mark_list.append(seq_x_mark)

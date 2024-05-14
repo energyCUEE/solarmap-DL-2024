@@ -146,7 +146,11 @@ if __name__ == '__main__':
         exp.test(setting)
 
         print('>>>>>>> Evaluation : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
-        exp.evaluation(setting)
+        exp.evaluation(setting, condition_spit_sky_condition="k_bar")
+
+        print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
+        exp.evaluation(setting, condition_spit_sky_condition="roc")
         
         torch.cuda.empty_cache()
         
