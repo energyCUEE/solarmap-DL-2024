@@ -241,7 +241,7 @@ class DatasetCUEE(data.Dataset):
         isfiles_list = []
         for file_suffix in SUFFIX_SAVED_FILES_LIST:
             isfiles_list.append(os.path.isfile( os.path.join(self.folder, file_suffix) )) 
- 
+         
         if all(isfiles_list)  == True: 
             self.__read_file_to_list()
         

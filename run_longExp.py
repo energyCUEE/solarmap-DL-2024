@@ -132,7 +132,7 @@ if __name__ == '__main__':
             print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
             exp.test(setting) 
 
-            # exp.evaluation(setting)
+            exp.evaluation(setting)
 
             torch.cuda.empty_cache()
     else:
