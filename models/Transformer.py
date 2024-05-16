@@ -17,7 +17,6 @@ class Model(nn.Module):
         self.output_attention = configs.output_attention
 
  
-        self.fc = nn.Linear(configs.dec_in, configs.d_target, bias=True) 
 
         # Embedding
         if configs.embed_type == 0:
@@ -82,6 +81,7 @@ class Model(nn.Module):
             projection=nn.Linear(configs.d_model, configs.c_out, bias=True)
         )
 
+        self.fc = nn.Linear(configs.c_out, configs.d_target, bias=True) 
         
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec,
@@ -91,6 +91,7 @@ class Model(nn.Module):
         enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
 
         dec_out = self.dec_embedding(x_dec, x_mark_dec)
+ 
         dec_out = self.decoder(dec_out, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)
  
         dec_out = self.fc(dec_out)  

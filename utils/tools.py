@@ -7,6 +7,7 @@ import pdb
 import csv
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import pandas as pd
+from decimal import Decimal
 
 MEANING_PARAM = {}
 MEANING_PARAM["d_model"]    = "#Hidden" 
@@ -149,12 +150,12 @@ def save_settings_dict(args, setting, num_params, folder='checkpoints'):
 def set_folder_name(args, ii):
     # setting record of experiments
     dropout_argument = ("%.2f" % args.dropout).replace(".","p")
-
+    lr_argument = ('%.1E' % Decimal("%.5f" % args.learning_rate)).replace(".","p")
+     
     if args.model == "PatchTST":
-        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+        setting = '{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
         args.model,
-        args.data,
-        args.moving_avg,
+        args.data, 
         args.features,
         args.enc_in, 
         args.seq_len,
@@ -171,13 +172,15 @@ def set_folder_name(args, ii):
         args.embed_type,
         args.embed,
         args.distil,
-        dropout_argument,
-        args.des, 
-        args.loss, 
-        ii)
+        dropout_argument, 
+        args.loss,
+        args.train_epochs,  
+        lr_argument,
+        args.batch_size)
 
-    else: 
-        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_{}_{}loss_{}'.format( 
+    elif (args.model == "Autoformer") or (args.model == "DLinear"):
+        
+        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
         args.model,
         args.data,
         args.moving_avg,
@@ -195,10 +198,35 @@ def set_folder_name(args, ii):
         args.embed_type,
         args.embed,
         args.distil,
-        dropout_argument,
-        args.des, 
-        args.loss, 
-        ii )
+        dropout_argument, 
+        args.loss,
+        args.train_epochs, 
+        lr_argument,
+        args.batch_size )
+    
+    else: 
+        setting = '{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+        args.model,
+        args.data, 
+        args.features,
+        args.enc_in, 
+        args.seq_len,
+        args.label_len,
+        args.pred_len,
+        args.d_model,
+        args.n_heads,
+        args.e_layers,
+        args.d_layers,
+        args.d_ff,
+        args.factor,
+        args.embed_type,
+        args.embed,
+        args.distil,
+        dropout_argument, 
+        args.loss,
+        args.train_epochs, 
+        lr_argument,
+        args.batch_size )
 
     return setting
 
@@ -206,9 +234,9 @@ def get_folder_name(settings):
 
     
     model_name    = settings["network"]
+
     dataset       = settings["dataset"] 
 
-    moving_average = settings["moving_average"] 
     mode           = settings["feature_mode"] 
     enc            = settings["enc_in"]   
 
@@ -228,10 +256,28 @@ def get_folder_name(settings):
     dp            = ("%.02f" % settings["dropout"]).replace(".","p")
     des           = settings["des"]
     loss          = settings["loss"] 
- 
+    
+    train_epochs  = settings["train_epochs"] 
+    learning_rate = settings["learning_rate"] 
+    lr_argument = ('%.2E' % Decimal("%.5f" % learning_rate)).replace(".","p")
+    batchsize     = settings["batch_size"] 
 
-    return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_etype%d_ebtime%s_dt%s_dp%s_%s_%sloss_0"   % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, ebtype, time_embeding, distill, dp, des, loss)
 
+    if model_name == "PatchTST":
+
+        moving_average = settings["moving_average"] 
+        patch_len = settings["patch_len"]
+        stride = settings["stride"] 
+
+        return "%s_%s_ft%s_enc%d_sl%d_ll%d_pl%d_ps{}_st{}_dm%d_nh%d_el%d_dl%d_df%d_fc%d_etype%d_ebtime%s_dt%s_dp%s_loss%s_ep%d_lr%s_bs%d"  % (model_name, dataset,  mode, enc, seq_length, ll, pred_length, patch_len, stride, dm, nh, el, dl, d_ff, fc, ebtype, time_embeding, distill, dp, loss, train_epochs, lr_argument, batchsize)
+
+    elif (model_name == "Autoformer") or (model_name == "DLinear"): 
+
+        moving_average = settings["moving_average"] 
+        return "%s_%s_mv%d_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_etype%d_ebtime%s_dt%s_dp%s_loss%s_ep%d_lr%s_bs%d" % (model_name, dataset, moving_average, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, ebtype, time_embeding, distill, dp, loss, train_epochs, lr_argument, batchsize)
+    else:
+
+        return "%s_%s_ft%s_enc%d_sl%d_ll%d_pl%d_dm%d_nh%d_el%d_dl%d_df%d_fc%d_etype%d_ebtime%s_dt%s_dp%s_loss%s_ep%d_lr%s_bs%d" % (model_name, dataset, mode, enc, seq_length, ll, pred_length, dm, nh, el, dl, d_ff, fc, ebtype, time_embeding, distill, dp, loss, train_epochs, lr_argument, batchsize)
 
 def get_folders_list(settings, tuning_param, value_list): 
     folder_list = []

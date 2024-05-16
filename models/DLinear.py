@@ -69,7 +69,7 @@ class Model(nn.Module):
             # Use this two lines if you want to visualize the weights
             # self.Linear_Seasonal.weight = nn.Parameter((1/self.seq_len)*torch.ones([self.pred_len,self.seq_len]))
             # self.Linear_Trend.weight = nn.Parameter((1/self.seq_len)*torch.ones([self.pred_len,self.seq_len]))
-
+        self.fc = nn.Linear(configs.enc_in, configs.d_target) 
     def forward(self, x):
         # x: [Batch, Input length, Channel]
         seasonal_init, trend_init = self.decompsition(x)
@@ -85,4 +85,5 @@ class Model(nn.Module):
             trend_output = self.Linear_Trend(trend_init)
 
         x = seasonal_output + trend_output
-        return x.permute(0,2,1) # to [Batch, Output length, Channel]
+        x = self.fc(x.permute(0,2,1)) 
+        return x # to [Batch, Output length, Channel]

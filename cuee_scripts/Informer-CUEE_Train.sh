@@ -7,22 +7,23 @@ if [ ! -d "./logs/LongForecasting" ]; then
 fi
 
 pred_len=1
-label_len=0  
-moving_avg=4
-batch_size=32
-seq_len=4
+label_len=0   
+batch_size=64
 target=I 
 
+seq_len=5
+
+model_name=Informer 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
 num_features=11 
+num_features_overlap=9
 
-model_name=Informer 
-# e_layer=4
+e_layer=2
 embed_type=2
-is_training=1 # Set to 0 to train... 
-d_model=16
-for e_layer in 2 #
+is_training=1 # Set to 0 to train...  
+
+for d_model in 16 #
 do
 python -u run_longExp.py \
     --is_training $is_training \
@@ -30,10 +31,9 @@ python -u run_longExp.py \
     --test_data_path pmaps_test_with_nighttime.csv \
     --valid_data_path pmaps_validate_with_nighttime.csv \
     --train_data_path pmaps_train_with_nighttime.csv \
-    --model_id CUEE_PMAPS_NIGHT_$seq_len'_'$pred_len \
-    --model $model_name \
-    --moving_avg $moving_avg \
-    --data CUEE_PMAPS_NIGHT \
+    --model_id   CUEE_PMAPS_NIGHT_$seq_len'_'$pred_len \
+    --model      $model_name \
+    --data       CUEE_PMAPS_NIGHT \
     --features   $feature_type \
     --target     $target \
     --seq_len    $seq_len \
@@ -45,13 +45,13 @@ python -u run_longExp.py \
     --d_target   1 \
     --d_layers   1 \
     --factor     3 \
-    --enc_in $num_features \
-    --dec_in $num_features \
-    --c_out  $num_features \
-    --des 'Exp' \
-    --loss 'l1' \
+    --enc_in    $num_features \
+    --dec_in    $num_features_overlap \
+    --c_out     $num_features \
+    --des       'Exp' \
+    --loss      'l1' \
     --scheduler 'ReduceLROnPlateau' \
-    --train_epochs 10 \
+    --train_epochs 50 \
     --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done
  

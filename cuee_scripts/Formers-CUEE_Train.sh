@@ -7,24 +7,27 @@ if [ ! -d "./logs/LongForecasting" ]; then
 fi
 
 pred_len=1
-label_len=0  
-moving_avg=3
-batch_size=32
-seq_len=4
+label_len=0   
+batch_size=64
 target=I 
+
+seq_len=5 
+moving_avg=3  # only used with Autoformer
+model_name=Transformer # Transformer / Autoformer
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
 num_features=11 
+num_features_overlap=9
 
-model_name=Transformer # Transformer Autoformer
-# e_layer=4
-embed_type=2
-d_model=16
-for e_layer in 2
+e_layer=2
+embed_type=2 
+is_training=1
+
+for d_model in 16
 do
 python -u run_longExp.py \
-    --is_training 1 \
+    --is_training $is_training \
     --root_path ./dataset/CUEE_PMAPS_NIGHT/ \
     --test_data_path pmaps_test_with_nighttime.csv \
     --valid_data_path pmaps_validate_with_nighttime.csv \
@@ -45,12 +48,12 @@ python -u run_longExp.py \
     --d_layers   1 \
     --factor     3 \
     --enc_in    $num_features \
-    --dec_in    $num_features \
+    --dec_in    $num_features_overlap \
     --c_out     $num_features \
     --des       'Exp' \
     --scheduler 'ReduceLROnPlateau' \
     --loss      'l1' \
-    --train_epochs 10 \
+    --train_epochs 20 \
     --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done
  

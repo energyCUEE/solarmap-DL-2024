@@ -8,21 +8,21 @@ fi
 
 pred_len=1
 label_len=0  
-moving_avg=4
 batch_size=32
-seq_len=4
 target=I
 
 
+seq_len=5
+
+model_name=RLSTM  
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
 num_features=11 
 
-model_name=RLSTM 
-d_model=16
-e_layer=5
-is_training=1
-for d_model in 16 
+e_layer=2 
+is_training=1 
+
+for d_model in 16
 do 
 python -u run_longExp.py \
     --is_training $is_training \
@@ -31,8 +31,7 @@ python -u run_longExp.py \
     --valid_data_path pmaps_validate_with_nighttime.csv \
     --train_data_path pmaps_train_with_nighttime.csv \
     --model_id CUEE_PMAPS_NIGHT_$seq_len'_'$pred_len \
-    --model $model_name \
-    --moving_avg $moving_avg \
+    --model $model_name \ 
     --data CUEE_PMAPS_NIGHT \
     --features  $feature_type \
     --target    $target \
@@ -44,11 +43,11 @@ python -u run_longExp.py \
     --enc_in   $num_features \
     --dec_in   $num_features \
     --c_out    $num_features \
-    --dropout  0.1\
-    --des 'Exp' \
-    --loss 'l1' \
+    --dropout  0.01\
+    --des      'Exp' \
+    --loss      'l1' \
     --scheduler 'ReduceLROnPlateau' \
-    --train_epochs 10 \
+    --train_epochs 50 \
     --batch_size $batch_size --learning_rate 0.001 --itr 1  
 done
  

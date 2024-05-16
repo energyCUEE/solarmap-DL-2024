@@ -12,13 +12,15 @@ batch_size=32
 target=I
 
 seq_len=5
+moving_avg=3
 
-model_name=Linear # NLinear
+model_name=DLinear
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
 num_features=11  
 is_training=1
 
+model_name=DLinear
 python -u run_longExp.py \
   --is_training $is_training  \
   --root_path ./dataset/CUEE/ \
@@ -28,6 +30,7 @@ python -u run_longExp.py \
   --train_data_path pmaps_train_with_nighttime.csv \
   --model_id CUEE_PMAPS_NIGHT_$seq_len'_'$pred_len \
   --model $model_name \
+  --moving_avg $moving_avg \
   --data CUEE_PMAPS_NIGHT \
   --features  $feature_type \
   --target    $target \

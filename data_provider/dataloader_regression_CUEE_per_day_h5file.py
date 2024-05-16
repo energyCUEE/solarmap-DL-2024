@@ -109,7 +109,7 @@ class DatasetCUEE(data.Dataset):
         end_time              = '17:00:00'        
         
         end_time   = pd.Timestamp(end_time).time() 
-        start_time = (start_prediction_time - timedelta(minutes= self.seq_len*15) ).time() 
+        start_time = (start_prediction_time - timedelta(minutes= (self.seq_len - 1)*15) ).time() 
  
     
         if self.tag == "CUEE_PMAPS":
@@ -145,7 +145,7 @@ class DatasetCUEE(data.Dataset):
             raw_data['date']     = pd.to_datetime(raw_data['Datetime'], format='%Y-%m-%d')
             
             print("===============================================" )
-            print("Seq length: %d  so, we will start %d [%dx15] mins. before 8:00 AM" % (self.seq_len, self.seq_len*15, self.seq_len ) )
+            print("Seq length: %d so, we will start %d [%d-1x15] mins. before 8:00 AM" % (self.seq_len,  (self.seq_len-1)*15, (self.seq_len) ))
             print("Start time: %s" % start_time.strftime("%H:%M:%S"))
             print("End   time: %s" % end_time.strftime("%H:%M:%S"))
             print("===============================================" )
@@ -202,7 +202,7 @@ class DatasetCUEE(data.Dataset):
             df_train_raw  = choose_date(df_train_raw, start_date=start_date )   
             raw_data      = choose_date(raw_data, start_date=start_date )
             print("===============================================" )
-            print("Seq length: %d  so, we will start %d [%dx15] mins. before 8:00 AM" % (self.seq_len, self.seq_len*15, self.seq_len ))
+            print("Seq length: %d so, we will start %d [%d-1x15] mins. before 8:00 AM" % (self.seq_len,  (self.seq_len-1)*15, (self.seq_len) ))
             print("Start time: %s" % start_time.strftime("%H:%M:%S"))
             print("End   time: %s" % end_time.strftime("%H:%M:%S"))
             print("===============================================" )
@@ -212,13 +212,13 @@ class DatasetCUEE(data.Dataset):
             
             # scaling  
             train_data_x = df_raw_train[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            train_data_v = df_raw_train[['Iclr', 'CI', 'R', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']] 
+            train_data_v = df_raw_train[['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']]  # 9 features
             train_data_y = df_raw_train[[self.target]]  
             
             # The last attribute is also a target attribute ...  
             # cols_data  = df_raw.columns[1:]   
             df_data_x    = df_raw[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            df_data_v    = df_raw[['Iclr', 'CI', 'R', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']] 
+            df_data_v    = df_raw[['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']]  # 9 features
             
             df_data_y    = df_raw[[self.target]]  
 
@@ -343,6 +343,7 @@ class DatasetCUEE(data.Dataset):
                 mask_ = (df_stamp['date'] == date_).values * (df_stamp['site_name'] == stations_).values 
                 bar.set_description("%s - %s - num %d" % (date_, stations_, sum(mask_ == True)))
                 if sum(mask_ == True)  > 0:
+
                     masked_data_x = data_x[mask_,:]
                     masked_data_y = data_y[mask_,:]
                     masked_data_v = data_v[mask_,:] 
@@ -357,21 +358,17 @@ class DatasetCUEE(data.Dataset):
                         s_begin = index
                         s_end   = s_begin + self.seq_len
 
-                        ov_begin = s_end  - self.label_len
-                        ov_end   = s_end  + self.pred_len
+                        ov_begin = s_end - 1  - self.label_len 
+                        ov_end   = ov_begin  + self.pred_len  
                 
-                        r_begin = s_end  
-                        r_end   = s_end  + self.pred_len
+                        r_begin = s_end  - 1
+                        r_end   = r_begin  + self.pred_len  
                         
-                        seq_x = masked_data_x[s_begin:s_end, :]
+                        seq_x  = masked_data_x[s_begin: s_end,   :]      # seq_x_ = masked_data_x[s_begin:s_end, :]
+                        seq_v  = masked_data_v[ov_begin: ov_end, :]      # seq_v = torch.zeros(self.pred_len, masked_data_x.shape[-1]) # 1 x Feat size   
+                        seq_y  = masked_data_y[r_begin:  r_end,  :] 
 
-                        # if self.label_len < 1:
-                        #     seq_v = torch.zeros(self.pred_len, masked_data_x.shape[-1]) # 1 x Feat size
-                        # else: 
-                        seq_v  = masked_data_v[ov_begin:ov_end, :]   
-                        seq_y  = masked_data_y[r_begin:r_end, :] 
-                        seq_sky_condition = masked_data_sky_condition[r_begin:r_end, :]
- 
+                        seq_sky_condition = masked_data_sky_condition[r_begin:r_end, :] 
 
                         seq_x_mark = masked_data_stamp[s_begin:s_end]
                         seq_v_mark = masked_data_stamp[ov_begin:ov_end] 
@@ -379,7 +376,17 @@ class DatasetCUEE(data.Dataset):
                         
                         date_time_x = masked_date_time[s_begin:s_end]
                         date_time_y = masked_date_time[r_begin:r_end]
+                        date_time_v = masked_date_time[ov_begin:ov_end]
 
+                        # print("Time X")
+                        # print(date_time_x) 
+
+                        # print("Time Y")
+                        # print(date_time_y)
+
+                        # print("Time V")
+                        # print(date_time_v)
+ 
                         self.seq_x_list.append(seq_x)
                         self.seq_v_list.append(seq_v)
                         self.seq_y_list.append(seq_y)

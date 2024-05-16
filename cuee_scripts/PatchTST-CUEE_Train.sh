@@ -8,46 +8,43 @@ fi
 
 pred_len=1
 label_len=0  
-moving_avg=4
 batch_size=32
-seq_len=4
 target=I
 
+# seq_len=5
+
+seq_len=(3 5 9 17)
+patch_len=(1 3 5 9)
+stride=1
+
+model_name=PatchTST  
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
-num_features=11 
-
-patch_len=2
-stride=1
-e_layer=3
-model_name=PatchTST  
+num_features=11  
+ 
+e_layer=3 
 d_ff=512
 d_model=16
-e_layer=4
+e_layer=4 
 
-seq_len=(4 8 12 16)
-patch_len=(2 4 6 8)
-stride=(1 2 3 4)
-
+is_training=1
 
 for i in "${!seq_len[@]}"
 do
 
 seq_len_temp=${seq_len[i]}
-patch_len_temp=${patch_len[i]}
-stride_temp=${stride[i]}
+patch_len_temp=${patch_len[i]} 
 
-printf '%q %q %q\n' "$seq_len_temp" "$patch_len_temp" "$stride_temp"
+printf '[%d] SEQ:%q PAT:%q STRIDE:%q\n' $i "$seq_len_temp" "$patch_len_temp" "$stride"
 
 python -u run_longExp.py \
-    --is_training 1 \
+    --is_training $is_training \
     --root_path ./dataset/CUEE_PMAPS_NIGHT/ \
     --test_data_path pmaps_test_with_nighttime.csv \
     --valid_data_path pmaps_validate_with_nighttime.csv \
     --train_data_path pmaps_train_with_nighttime.csv \
     --model_id CUEE_PMAPS_NIGHT_$seq_len_temp'_'$pred_len \
     --model $model_name \
-    --moving_avg    $moving_avg \
     --data CUEE_PMAPS_NIGHT \
     --features      $feature_type \
     --target        $target \
@@ -60,13 +57,14 @@ python -u run_longExp.py \
     --d_model       $d_model \
     --d_ff          $d_ff \
     --d_target      1\
-    --dropout       0.3\
-    --fc_dropout    0.3\
+    --dropout       0.01\
+    --fc_dropout    0.01\
     --head_dropout  0\
     --patch_len     $patch_len_temp\
-    --stride        $stride_temp \
+    --stride        $stride \
     --des           'Exp' \
-    --train_epochs  10\
+    --train_epochs  20\
+    --loss          'l1' \
     --lradj         'TST'\
     --pct_start     0.3\
     --itr 1 --batch_size $batch_size --learning_rate 0.001

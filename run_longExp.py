@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # random seed
+    # random seed 
     fix_seed = args.random_seed
     random.seed(fix_seed)
     torch.manual_seed(fix_seed)
@@ -132,7 +132,8 @@ if __name__ == '__main__':
             print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
             exp.test(setting) 
 
-            exp.evaluation(setting)
+            exp.evaluation(setting, condition_spit_sky_condition="k_bar") 
+            exp.evaluation(setting, condition_spit_sky_condition="roc")
 
             torch.cuda.empty_cache()
     else:
