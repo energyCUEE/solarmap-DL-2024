@@ -32,6 +32,10 @@ if __name__ == '__main__':
     parser.add_argument('--freq',            type=str, default='h',  help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
     parser.add_argument('--checkpoints',     type=str, default='./checkpoints/', help='location of model checkpoints')
 
+    # forecasting task with I_clr
+    parser.add_argument('--use_Iclr', action='store_true', default=False, help='whether using Iclr as a prior for input')
+    parser.add_argument('--input_dropout',   type=float, default=0.01, help='dropout for regularizing the input Iclr') 
+    
     # forecasting task
     parser.add_argument('--seq_len',   type=int, default=96, help='input sequence length')
     parser.add_argument('--label_len', type=int, default=48, help='start token length')
@@ -67,11 +71,15 @@ if __name__ == '__main__':
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
     parser.add_argument('--factor',     type=int, default=1, help='attn factor')
     parser.add_argument('--distil',     action='store_false', help='whether to use distilling in encoder, using this argument means not using distilling', default=True)
-    parser.add_argument('--dropout',    type=float, default=0.05, help='dropout')
     parser.add_argument('--embed',      type=str, default='timeF', help='time features encoding, options:[timeF, fixed, learned]')
     parser.add_argument('--activation', type=str, default='gelu', help='activation')
     parser.add_argument('--output_attention', action='store_true', help='whether to output attention in ecoder')
-    parser.add_argument('--do_predict', action='store_true', help='whether to predict unseen future data')
+    parser.add_argument('--do_predict', action='store_true', help='whether to predict unseen future data')    
+    
+    ## RLSMT and Formers
+    parser.add_argument('--dropout',    type=float, default=0.05, help='dropout') 
+    
+
 
 
     # optimization

@@ -375,8 +375,8 @@ class DatasetCUEE(data.Dataset):
                         seq_y_mark = masked_data_stamp[r_begin:r_end] 
                         
                         date_time_x = masked_date_time[s_begin:s_end]
-                        date_time_y = masked_date_time[r_begin:r_end]
                         date_time_v = masked_date_time[ov_begin:ov_end]
+                        date_time_y = masked_date_time[r_begin:r_end]
 
                         # print("Time X")
                         # print(date_time_x) 

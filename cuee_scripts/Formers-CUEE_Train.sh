@@ -11,9 +11,9 @@ label_len=0
 batch_size=64
 target=I 
 
-seq_len=5 
-moving_avg=3  # only used with Autoformer
-model_name=Transformer # Transformer / Autoformer
+seq_len=9 
+# moving_avg=3  # only used with Autoformer
+model_name=Autoformer # Transformer / Autoformer
 
 # we run only two mode "S" or "MS"; if you use "S", please change to num_feature=1 
 feature_type=MS 
@@ -23,8 +23,8 @@ num_features_overlap=9
 e_layer=2
 embed_type=2 
 is_training=1
-
-for d_model in 16
+d_model=128
+for moving_avg in 1 3 5 7
 do
 python -u run_longExp.py \
     --is_training $is_training \
@@ -53,7 +53,7 @@ python -u run_longExp.py \
     --des       'Exp' \
     --scheduler 'ReduceLROnPlateau' \
     --loss      'l1' \
-    --train_epochs 20 \
-    --batch_size $batch_size --learning_rate 0.001 --itr 1  
+    --train_epochs 100 \
+    --batch_size $batch_size --learning_rate 0.002 --itr 1  
 done
  

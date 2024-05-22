@@ -22,8 +22,8 @@ num_features_overlap=9
 e_layer=2
 embed_type=2
 is_training=1 # Set to 0 to train...  
-
-for d_model in 16 #
+d_model=64
+for d_model in 64 
 do
 python -u run_longExp.py \
     --is_training $is_training \
@@ -51,7 +51,7 @@ python -u run_longExp.py \
     --des       'Exp' \
     --loss      'l1' \
     --scheduler 'ReduceLROnPlateau' \
-    --train_epochs 50 \
-    --batch_size $batch_size --learning_rate 0.001 --itr 1  
+    --train_epochs 100 \
+    --batch_size $batch_size --learning_rate 0.002 --itr 1  
 done
  

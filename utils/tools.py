@@ -151,6 +151,9 @@ def set_folder_name(args, ii):
     # setting record of experiments
     dropout_argument = ("%.2f" % args.dropout).replace(".","p")
     lr_argument = ('%.1E' % Decimal("%.5f" % args.learning_rate)).replace(".","p")
+
+    if args.use_Iclr:
+        dropout_argument = ("%.2f-ICLR-%.3f" % (args.dropout, args.input_dropout)).replace(".","p")
      
     if args.model == "PatchTST":
         setting = '{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
@@ -253,7 +256,7 @@ def get_folder_name(settings):
     time_embeding = settings["time_embeding"]  
     ebtype        = settings["embed_type"]  
     distill       =  settings["distil"]  
-    dp            = ("%.02f" % settings["dropout"]).replace(".","p")
+    
     des           = settings["des"]
     loss          = settings["loss"] 
     
@@ -261,6 +264,11 @@ def get_folder_name(settings):
     learning_rate = settings["learning_rate"] 
     lr_argument = ('%.2E' % Decimal("%.5f" % learning_rate)).replace(".","p")
     batchsize     = settings["batch_size"] 
+
+    if settings["use_Iclr"]:
+        dp = ("%.2f-ICLR-%.3f" % (settings["dropout"], settings["input_dropout"])).replace(".","p")
+    else:
+        dp = ("%.02f" % settings["dropout"]).replace(".","p")
 
 
     if model_name == "PatchTST":

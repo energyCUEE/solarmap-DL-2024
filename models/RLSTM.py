@@ -29,16 +29,17 @@ class Model(nn.Module):
         )
 
 
-        # Output layer for multi-step forecasting 
-        self.activation = nn.ReLU()
- 
-        if configs.dropout > 0.0:  
-            self.enable_dropout = True
-            self.dropout    = nn.Dropout(p=configs.dropout, inplace=False)
-        else:
-            self.enable_dropout = False
-        self.fc         = nn.Linear(in_features=self.hidden_units, out_features=self.forecast_steps)
+        # Output layer for multi-step forecasting  
+        
+        self.use_Iclr    = configs.use_Iclr
+        self.activation   = nn.ReLU()
+        self.dropout      = nn.Dropout(p=configs.dropout, inplace=False)
+        self.fc           = nn.Linear(in_features=self.hidden_units, out_features=self.forecast_steps)
 
+        if self.use_Iclr:
+            self.input_dropout = nn.Dropout(p=configs.input_dropout, inplace=False)
+            self.fc2           = nn.Linear(self.seq_len, 1)
+        
     def forward(self, x):
         '''
             This function is used to define the forward pass for the model
@@ -47,6 +48,13 @@ class Model(nn.Module):
         '''
         # Get the batch size  
         batch_size = x.shape[0] 
+
+        if self.use_Iclr:  
+            Iclr_dp = self.input_dropout(x[:,:, 0].view(-1,self.seq_len,1)).permute(0,2,1)  
+            Iclr    = self.fc2(Iclr_dp).reshape(-1,1) 
+            #Iclr    = self.fc2(Iclr)
+
+
         # X needs to be in the shape of B x L x F 
  
         # Initialize the hidden and cell state of the LSTM layer 
@@ -61,10 +69,12 @@ class Model(nn.Module):
         output = self.activation(output)
  
         # Dropout layer for regularization
-        if self.enable_dropout:
-            output = self.dropout(output)
+        output = self.dropout(output)
 
         output = self.fc(output[:, -1, :])
+        
+        if self.use_Iclr:
+            output = output*Iclr #  
         
         return output
     
