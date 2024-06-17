@@ -97,6 +97,7 @@ class Model(nn.Module):
 
         # x_dec.shape = 16 x 1 x 8       = B x Pred_Length X Feature
         # x_mark_dec.shape = 16 x 1 x 4  = B x Pred_Length X 4
+        # dec = decode --> overlap term
         enc_out = self.enc_embedding(x_enc, x_mark_enc)
         enc_out, attns = self.encoder(enc_out, attn_mask=enc_self_mask)
  

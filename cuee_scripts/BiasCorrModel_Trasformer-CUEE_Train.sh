@@ -1,36 +1,31 @@
-# Create logs directory if it doesn't exist
 if [ ! -d "./logs" ]; then
     mkdir ./logs
 fi
 
-# Create LongForecasting logs directory if it doesn't exist
 if [ ! -d "./logs/LongForecasting" ]; then
     mkdir ./logs/LongForecasting
 fi
 
-# Set parameters
 pred_len=1
 label_len=0
 batch_size=32
 target=I
 seq_len=5
-model_name=Informer
+model_name=BiasCorrModel
 feature_type=MS
-num_features=11  # len(features_list) -1 --> I_LGBM, Ireg = 11, I_nwp = 10, Iclr = 10, Informer=11
-d_model=64
+num_features=11 # len(features_list) -1 --> I_LGBM, Ireg = 11, Inwp = 10, Iclr = 10
+d_model=16 
 e_layer=2
 embed_type=2
 moving_avg=4
-num_features_overlap=9 # num_features_overlap = 1 (Iclr, Inwp), num_features_overlap = 2 (I_LGBM, Ireg), Informer=9
-# m2_name=Informer
+num_features_overlap=2 # 1 : [Inwp, Iclr], 2 : [I_LGBM, Ireg]
+
+# option_Ihat1=I_LGBM # Iclr, Inwp, I_LGBM
+m2_name=Transformer # Transformer, Informer
 folder_data=solarmap
 checkpoints=checkpoints_solarmap
-m2_name=Informer
 
-for option_Ihat1 in I; do
-    echo "Running model with option_Ihat1: $option_Ihat1"
-
-    # Execute the Python script with the specified parameters
+for option_Ihat1 in I_LGBM Ireg; do
     python -u run_longExp.py \
         --is_training 1 \
         --root_path ./dataset/$folder_data/ \
@@ -49,9 +44,9 @@ for option_Ihat1 in I; do
         --moving_avg $moving_avg \
         --e_layers $e_layer \
         --d_model $d_model \
-        --d_target 1 \
-        --d_layers 1 \
-        --factor 3 \
+        --d_target   1 \
+        --d_layers   1 \
+        --factor     3 \
         --enc_in $num_features \
         --dec_in $num_features_overlap \
         --c_out $num_features \
@@ -62,15 +57,9 @@ for option_Ihat1 in I; do
         --train_epochs 100 \
         --batch_size $batch_size \
         --learning_rate 0.001 \
-        --itr 1 \
-        --option_Ihat1 $option_Ihat1 \
-        --m2_name $m2_name \
+        --itr 1\
+        --option_Ihat1 $option_Ihat1\
+        --m2_name $m2_name\
         --checkpoints $checkpoints
-
-    # Check the exit status of the Python script
-    if [ $? -ne 0 ]; then
-        echo "Script failed with option_Ihat1: $option_Ihat1"
-        exit 1
-    fi
 done
 

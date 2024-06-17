@@ -156,8 +156,10 @@ def set_folder_name(args, ii):
         dropout_argument = ("%.2f-ICLR-%.3f" % (args.dropout, args.input_dropout)).replace(".","p")
      
     if args.model == "PatchTST":
-        setting = '{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+        setting = '{}_{}_{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+        args.option_Ihat1,
         args.model,
+        args.m2_name,
         args.data, 
         args.features,
         args.enc_in, 
@@ -183,8 +185,10 @@ def set_folder_name(args, ii):
 
     elif (args.model == "Autoformer") or (args.model == "DLinear"):
         
-        setting = '{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+        setting = '{}_{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+        args.option_Ihat1,
         args.model,
+        args.m2_name,
         args.data,
         args.moving_avg,
         args.features,
@@ -208,8 +212,10 @@ def set_folder_name(args, ii):
         args.batch_size )
     
     else: 
-        setting = '{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+        setting = '{}_{}_{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+        args.option_Ihat1,
         args.model,
+        args.m2_name,
         args.data, 
         args.features,
         args.enc_in, 
@@ -479,12 +485,11 @@ def plot_tuning_param_mae(settings, value_list, overall_mae_list, n_param, tunin
 def evaluation_skycondition(folder, condition_spit_sky_condition="k_bar"):
 
     
-    main_folder_path = "testing" 
+    main_folder_path = "testing_true_cloud_relation" 
     stats_ckp_folder = os.path.join(main_folder_path, folder)
     stats_df = pd.read_csv(os.path.join(stats_ckp_folder, 'stats_mae_mse.csv')) 
-    df       = pd.read_csv(os.path.join(stats_ckp_folder, 'result_dict.csv'))  
+    df       = pd.read_csv(os.path.join(stats_ckp_folder, 'result.csv'))  
  
-    df.drop(columns={'inputx', 'preds', 'trues'}, inplace=True)
 
     df['datetime'] = pd.to_datetime(df['datetime'], unit='s')
     df['datetime'] = df['datetime'].dt.tz_localize('UTC')
@@ -492,31 +497,42 @@ def evaluation_skycondition(folder, condition_spit_sky_condition="k_bar"):
     df['datetime'] = df['datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
     df['hour'] = pd.to_datetime(df['datetime']).dt.hour
 
-    df.rename(columns={'trues_rev': 'I', 'preds_rev': 'Ihat'}, inplace=True)  
     # pdb.set_trace()
     if condition_spit_sky_condition == 'k_bar':
-        df['sky_condition'] = df['sky_condition_kbar'].apply(
-            lambda x: 'cloudy' if x < 0.3 else ('partly_cloudy' if x < 0.6 else 'clear'))
+        df['sky_condition'] = df['k_bar'].apply(
+            lambda x: 'cloudy' if x < 0.6 else ('partly_cloudy' if x < 0.9 else 'clear'))
     else :
-        df['sky_condition'] = df['sky_condition_poc'].apply(
+        df['sky_condition'] = df['condition'].apply(
             lambda x: 'cloudy' if x == 3 else ('partly_cloudy' if x == 2 else 'clear'))
 
+    # Calculate MAE and RMSE by sky_condition
     sky_condition_mae = df.groupby('sky_condition')[['I', 'Ihat']].apply(lambda x: mean_absolute_error(x['I'], x['Ihat'])).reset_index(name='MAE')
     sky_condition_rmse = df.groupby('sky_condition')[['I', 'Ihat']].apply(lambda x: np.sqrt(mean_squared_error(x['I'], x['Ihat']))).reset_index(name='RMSE')
+
+    # Define the order of sky conditions
+    category_order = ["clear", "partly_cloudy", "cloudy"]
+
+    # Convert 'sky_condition' to a categorical type with the specified order
+    sky_condition_mae['sky_condition'] = pd.Categorical(sky_condition_mae['sky_condition'], categories=category_order, ordered=True)
+    sky_condition_rmse['sky_condition'] = pd.Categorical(sky_condition_rmse['sky_condition'], categories=category_order, ordered=True)
+
+    # Sort the DataFrames
+    sky_condition_mae = sky_condition_mae.sort_values('sky_condition')
+    sky_condition_rmse = sky_condition_rmse.sort_values('sky_condition')
         
     overall_mae        = mean_absolute_error(df['I'], df['Ihat'])
     overall_rmse       = np.sqrt(mean_squared_error(df['I'], df['Ihat']))
     print('Overall MAE [%s]:  %.2f' % (condition_spit_sky_condition, overall_mae))
     print('Overall RMSE [%s]: %.2f' % (condition_spit_sky_condition, overall_rmse))
     
-    print('MAE by sky_condition [%s]' % condition_spit_sky_condition)
-    print(sky_condition_mae)
+    print('\033[1mMAE by sky_condition [%s]\033[0m' % condition_spit_sky_condition)
+    print(sky_condition_mae.to_string(index=False))
 
-    print('\nRMSE by sky_condition [%s]' % condition_spit_sky_condition)
-    print(sky_condition_rmse)
+    print('\n\033[1mRMSE by sky_condition [%s]\033[0m' % condition_spit_sky_condition)
+    print(sky_condition_rmse.to_string(index=False))
 
     # Save the metrics to a csv file
-    stats_data = pd.concat([stats_df, sky_condition_mae, sky_condition_rmse], axis=0)
+    stats_data = pd.concat([sky_condition_mae, sky_condition_rmse], axis=0)
     stats_data.to_csv('%s/stats_mae_mbe_skycondition-%s.csv' % (stats_ckp_folder, condition_spit_sky_condition))
 
     fig, axes = plt.subplots(2, 3, figsize=(15, 10), sharey='row')

@@ -5,17 +5,17 @@ from torch.utils.data import DataLoader
 import os
 import numpy as np
 
-tag = "CUEE_PMAPS_NIGHT"
+tag = "solarmap"
 CUEE_ROOT = os.path.join(os.getcwd(),'dataset/' + tag)
-CUEE_DATA       = "pmaps_validate_with_nighttime.csv"
-PMAS_CUEE_TEST  = "pmaps_test_with_nighttime.csv"
-PMAS_CUEE_VALID = "pmaps_validate_with_nighttime.csv"
-PMAS_CUEE_TRAIN = "pmaps_train_with_nighttime.csv"
-
+CUEE_DATA       = "train_data.csv"
+PMAS_CUEE_TEST  = "test_data.csv"
+PMAS_CUEE_VALID = "val_data.csv"
+PMAS_CUEE_TRAIN = "train_data.csv"
+pdb.set_trace()
 size = [4, 0, 1]
 
 dataset    = DatasetCUEE(root_path= CUEE_ROOT,  test_data_path=PMAS_CUEE_TEST, valid_data_path=PMAS_CUEE_VALID, train_data_path=PMAS_CUEE_TRAIN, 
-                         data_path=CUEE_DATA, flag='val', size=size, features='MS',  target='I', scale=True, timeenc=1, freq='h', train_only=False, tag=tag)
+                         data_path=CUEE_DATA, flag='train', size=size, features='MS',  target='I', scale=True, timeenc=1, freq='h', train_only=False, tag=tag)
 dataloader = DataLoader(dataset, batch_size=1)
 
 trues_rev_list = []

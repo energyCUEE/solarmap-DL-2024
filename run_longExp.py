@@ -10,6 +10,10 @@ from utils.tools import set_folder_name
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Autoformer & Transformer family for Time Series Forecasting')
 
+    # select for BiasCorrModel
+    parser.add_argument('--option_Ihat1', default='I_clr', help='we can selected the option_Ihat1 such as I_clr, I_nwp')
+    parser.add_argument('--m2_name', type=str, required=True, default='RLSTM',  help='model name, options: [RLSTM, Transformer]')
+
     # random seed
     parser.add_argument('--random_seed', type=int, default=2021, help='random seed')
 
@@ -23,14 +27,15 @@ if __name__ == '__main__':
     parser.add_argument('--data',            type=str, required=True, default='ETTm1', help='dataset type')
     parser.add_argument('--root_path',       type=str, default='./data/ETT/', help='root path of the data file')
     parser.add_argument('--data_path',       type=str, default='ETTh1.csv', help='data file')
-    parser.add_argument('--test_data_path',  type=str, default='pmaps_test_data.csv', help='data file')  
-    parser.add_argument('--train_data_path', type=str, default='pmaps_train_data.csv', help='data file')
-    parser.add_argument('--valid_data_path', type=str, default='pmaps_validate_data.csv', help='data file')
+    parser.add_argument('--test_data_path',  type=str, default='pmaps_test_with_nighttime.csv', help='data file')  
+    parser.add_argument('--train_data_path', type=str, default='pmaps_train_with_nighttime.csv', help='data file')
+    parser.add_argument('--valid_data_path', type=str, default='pmaps_validate_with_nighttime.csv', help='data file')
 
     parser.add_argument('--features',        type=str, default='M',  help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
     parser.add_argument('--target',          type=str, default='OT', help='target feature in S or MS task')
     parser.add_argument('--freq',            type=str, default='h',  help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
     parser.add_argument('--checkpoints',     type=str, default='./checkpoints/', help='location of model checkpoints')
+    parser.add_argument('--test_result_folder', type=str, default='./test_results/', help='location of test results')
 
     # forecasting task with I_clr
     parser.add_argument('--use_Iclr', action='store_true', default=False, help='whether using Iclr as a prior for input')
@@ -141,7 +146,7 @@ if __name__ == '__main__':
             exp.test(setting) 
 
             exp.evaluation(setting, condition_spit_sky_condition="k_bar") 
-            exp.evaluation(setting, condition_spit_sky_condition="roc")
+            exp.evaluation(setting, condition_spit_sky_condition="condition")
 
             torch.cuda.empty_cache()
     else:
@@ -157,9 +162,9 @@ if __name__ == '__main__':
         print('>>>>>>> Evaluation : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))
         exp.evaluation(setting, condition_spit_sky_condition="k_bar")
 
-        print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+        print('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
 
-        exp.evaluation(setting, condition_spit_sky_condition="roc")
+        exp.evaluation(setting, condition_spit_sky_condition="condition")
         
         torch.cuda.empty_cache()
         

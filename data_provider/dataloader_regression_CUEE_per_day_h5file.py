@@ -43,13 +43,14 @@ def choose_daytimehours(data, start=1, end=9):
     return data_
 
 def choose_stations(data, station_num_list=["ISL052"]):   
-    chosen_sitename  = [ True if site in station_num_list else False for site in data["site_name"] ]
+    chosen_sitename  = [ True if site in station_num_list else False for site in data["sitename"] ]
     data_ = data.iloc[chosen_sitename].copy()
     return data_
  
 class DatasetCUEE(data.Dataset):
     def __init__(self,  root_path = CUEE_ROOT, flag='train', size=None, features='S',  
-                test_data_path=PMAS_CUEE_TEST, valid_data_path=PMAS_CUEE_VALID, train_data_path=PMAS_CUEE_TRAIN, data_path=CUEE_DATA,   target='I', scale=True, timeenc=0, freq='h', train_only=False, tag="CUEE_PMAPS" ):
+                test_data_path=PMAS_CUEE_TEST, valid_data_path=PMAS_CUEE_VALID, train_data_path=PMAS_CUEE_TRAIN, data_path=CUEE_DATA,   
+                target='I', scale=True, timeenc=0, freq='h', train_only=False, tag="CUEE_PMAPS", option_Ihat1 = 'I_LGBM'):
         super(DatasetCUEE, self).__init__()
 
         
@@ -82,6 +83,7 @@ class DatasetCUEE(data.Dataset):
         self.scaler_y = StandardScaler()
         self.flag = flag
         self.tag = tag
+        self.option_Ihat1 = option_Ihat1
  
         self.root_path  = root_path   
      
@@ -101,11 +103,11 @@ class DatasetCUEE(data.Dataset):
     def __read_data__(self): 
         
         raw_data = [] 
- 
+
         train_data     = pd.read_csv(os.path.join(self.root_path, self.train_data_path) ) 
         read_data      = pd.read_csv(os.path.join(self.root_path, self.data_path) ) 
         
-        start_prediction_time = datetime(2022, 4, 2, 8, 0) 
+        start_prediction_time = datetime(2022, 4, 2, 7, 0) 
         end_time              = '17:00:00'        
         
         end_time   = pd.Timestamp(end_time).time() 
@@ -138,7 +140,7 @@ class DatasetCUEE(data.Dataset):
             # therefore, we can comment out the following lines:  
 
             start_date = '2022-04-02' 
-            self.folder = os.path.join(self.root_path, "%s-%s-%s-%s" % (self.flag, start_date, start_time, end_time))
+            self.folder = os.path.join(self.root_path, "%s-%s-%s-%s-%s" % (self.option_Ihat1, self.flag, start_date, start_time, end_time))
             os.makedirs(self.folder, exist_ok=True)
             
             df_train_raw['date'] = pd.to_datetime(df_train_raw['Datetime'], format='%Y-%m-%d')
@@ -167,8 +169,8 @@ class DatasetCUEE(data.Dataset):
             df_data_v    = df_raw[['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']] 
             df_data_y    = df_raw[[self.target]]   
 
-        elif self.tag == "CUEE_PMAPS_NIGHT": 
-            df_train_raw = train_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'T_nwp', 'I_nwp']].copy() 
+        elif self.tag == "CUEE_PMAPS_NIGHT" or self.tag == "solarmap_exp" or self.tag == "solarmap" or self.tag == "true_cloud_relation" : 
+            df_train_raw = train_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy()
             df_train_raw['Datetime']     = pd.to_datetime(df_train_raw['Datetime'], utc=False) # Should be false If False == Thailand Local Time (Guessing)
             df_train_raw["hour"]         = [ date.hour   for date in df_train_raw['Datetime'] ]
             df_train_raw['day']          = [ date.day    for date in df_train_raw['Datetime'] ]
@@ -176,7 +178,8 @@ class DatasetCUEE(data.Dataset):
             df_train_raw['minute']       = [ date.minute for date in df_train_raw['Datetime'] ]
 
             #'updated_measurement_Iclr_new.csv'   
-            raw_data       =  read_data[['Datetime', 'site_name', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'T_nwp', 'I_nwp', 'average_k','condition']].copy()
+            raw_data       =  read_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy()
+            # pdb.set_trace() 
 
             raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=False) # Should be false If False == Thailand Local Time (Guessing)
             raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
@@ -193,50 +196,94 @@ class DatasetCUEE(data.Dataset):
             # therefore, we can comment out the following lines: 
  
             start_date = '2022-04-02' 
-            self.folder = os.path.join(self.root_path, "%s-%s-%s-%s" % (self.flag, start_date, start_time, end_time))
+            self.folder = os.path.join(self.root_path, "%s-%s-%s-%s-%s" % (self.option_Ihat1, self.flag, start_date, start_time, end_time))
             os.makedirs(self.folder, exist_ok=True)
 
             df_train_raw['date'] = pd.to_datetime(df_train_raw['Datetime'], format='%Y-%m-%d')
-            raw_data['date']     = pd.to_datetime(raw_data['Datetime'], format='%Y-%m-%d')
+            raw_data['date']     = pd.to_datetime(raw_data['Datetime'], format='%Y-%m-%d') 
 
             df_train_raw  = choose_date(df_train_raw, start_date=start_date )   
             raw_data      = choose_date(raw_data, start_date=start_date )
             print("===============================================" )
-            print("Seq length: %d so, we will start %d [%d-1x15] mins. before 8:00 AM" % (self.seq_len,  (self.seq_len-1)*15, (self.seq_len) ))
+            print("Seq length: %d so, we will start %d [%d-1x15] mins. before 7:00 AM" % (self.seq_len,  (self.seq_len-1)*15, (self.seq_len) ))
             print("Start time: %s" % start_time.strftime("%H:%M:%S"))
             print("End   time: %s" % end_time.strftime("%H:%M:%S"))
+            print("Foldername: [%s]" % self.folder)
             print("===============================================" )
 
             df_raw_train  = choose_datetime(df_train_raw, start_time=start_time, end_time=end_time)   
             df_raw        = choose_datetime(raw_data, start_time=start_time, end_time=end_time)    
             
-            # scaling  
-            train_data_x = df_raw_train[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] # ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            train_data_v = df_raw_train[['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']]  # 9 features
-            train_data_y = df_raw_train[[self.target]]  
+            ## create option for select the list of features and overlap_list
+            ### **note : for features_list in the first values should be the same as option_Ihat1
             
-            # The last attribute is also a target attribute ...  
-            # cols_data  = df_raw.columns[1:]   
-            df_data_x    = df_raw[['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp'] ] #   ['Iclr', 'latt', 'long', 'day', 'month', 'hour', 'minute']
-            df_data_v    = df_raw[['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'T_nwp', 'I_nwp']]  # 9 features
+            if self.option_Ihat1  == 'Iclr':
+                features_list = ['Iclr', 'Inwp', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
+                overlap_list = ['Inwp']
+
+            elif self.option_Ihat1 == 'Inwp':
+                features_list = ['Inwp', 'Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
+                overlap_list = ['Iclr']
+
+            elif self.option_Ihat1 == 'I_LGBM':
+                features_list = ['I_LGBM', 'Iclr', 'Inwp', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
+                overlap_list = ['Iclr', 'Inwp'] 
             
-            df_data_y    = df_raw[[self.target]]  
+            elif self.option_Ihat1 == 'Ireg':
+                features_list = ['Ireg', 'Iclr', 'Inwp', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
+                overlap_list = ['Iclr', 'Inwp'] 
 
+            elif self.option_Ihat1 == 'I':
+                features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+                overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+            
+            elif self.option_Ihat1 == 'I_optionA':
+                features_list = ['hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+                overlap_list  = ['hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+            
+            elif self.option_Ihat1 == 'I_optionB':
+                features_list = ['Iclr', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+                overlap_list  = ['Iclr', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+            
+            elif self.option_Ihat1 == 'I_optionC':
+                features_list = ['CI', 'R','hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+                overlap_list  = ['CI', 'R','hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+            
+            # create date  for scaling data
+            train_data_x = df_raw_train[features_list]
+            train_data_v = df_raw_train[overlap_list]
+            train_data_y = df_raw_train[[self.target]]
+            
+            # select data for normalization
+            df_data_x    = df_raw[features_list]
+            df_data_v    = df_raw[overlap_list]
+            df_data_y    = df_raw[self.target]
+            # pdb.set_trace()   
 
+            # convert sky condition from string to float          
             df_raw_sky_condition = df_raw.copy()
-            df_raw_sky_condition.rename(columns={'condition': 'sky_condition_roc'}, inplace=True)
-            df_raw_sky_condition.loc[:, 'sky_condition_roc'] = df_raw_sky_condition['sky_condition_roc'].apply(
+            df_raw_sky_condition.loc[:, 'condition'] = df_raw_sky_condition['condition'].apply(
                 lambda x: 1 if x == 'clr' else (2 if x == 'partly_cloudy' else 3))
-            df_data_sky_condition = df_raw_sky_condition[['average_k', 'sky_condition_roc']].values
+            df_data_sky_condition = df_raw_sky_condition[['k_bar', 'condition']].values
 
+            # get sitename 
+            df_sitename = df_raw[['sitename']].values
+
+
+        # normalization
         self.scaler_x.fit(train_data_x.values) 
         data_x = self.scaler_x.transform(df_data_x.values)
 
-        self.scaler_v.fit(train_data_v.values) 
-        data_v = self.scaler_v.transform(df_data_v.values)
+        # check len of overlap_list
+        if len(overlap_list) == 1 :
+            self.scaler_v.fit(train_data_v.values.reshape(-1,1)) 
+            data_v = self.scaler_v.transform(df_data_v.values.reshape(-1,1))
+        else:
+            self.scaler_v.fit(train_data_v.values) 
+            data_v = self.scaler_v.transform(df_data_v.values)
 
         self.scaler_y.fit(train_data_y.values.reshape(-1,1)) 
-        data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1)) 
+        data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1))        
 
         isfiles_list = []
         for file_suffix in SUFFIX_SAVED_FILES_LIST:
@@ -247,7 +294,7 @@ class DatasetCUEE(data.Dataset):
         
         else:
             # time stamp 
-            df_stamp = df_raw.loc[:,['Datetime', 'site_name']]  
+            df_stamp = df_raw.loc[:,['Datetime', 'sitename']]  
             df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)   
 
             if self.timeenc == 0:
@@ -265,7 +312,7 @@ class DatasetCUEE(data.Dataset):
             date_time = npdatetime_to_string(df_stamp['Datetime'].values.copy())   
             df_stamp['date'] = pd.to_datetime(df_stamp['Datetime']).dt.date 
 
-            self.__stacked_to_daily_seq(data_x, data_y, data_v, data_stamp, df_stamp, df_data_sky_condition)
+            self.__stacked_to_daily_seq(data_x, data_y, data_v, data_stamp, df_stamp, df_data_sky_condition, df_sitename)
 
             self.__save_list_to_file()
 
@@ -301,6 +348,7 @@ class DatasetCUEE(data.Dataset):
             h5f.create_dataset("seq_v", data=np.asarray(self.seq_v_list) )
  
             h5f.create_dataset("seq_sky_condition", data=np.asarray(self.seq_sky_condition_list).astype(np.float32))
+            h5f.create_dataset("seq_sitename", data=np.asarray(self.seq_sitename_list).astype(np.float32))
 
             h5f.create_dataset("seq_x_mark", data=np.asarray(self.seq_x_mark_list) )
             h5f.create_dataset("seq_y_mark", data=np.asarray(self.seq_y_mark_list) )
@@ -319,7 +367,7 @@ class DatasetCUEE(data.Dataset):
         # with open(os.path.join(self.folder , "sky_condition_list.npy"), 'wb') as fp:
         #     pickle.dump(self.seq_sky_condition_list, fp)
 
-    def __stacked_to_daily_seq(self, data_x, data_y, data_v, data_stamp, df_stamp, df_data_sky_condition):
+    def __stacked_to_daily_seq(self, data_x, data_y, data_v, data_stamp, df_stamp, df_data_sky_condition, df_sitename):
         
         date_list = (np.unique(df_stamp['date'].values)).tolist() 
 
@@ -335,12 +383,13 @@ class DatasetCUEE(data.Dataset):
         self.date_time_y_list = []
 
         self.seq_sky_condition_list = []
+        self.seq_sitename_list = []
 
 
         bar = tqdm(self.stations_list) 
         for stations_ in bar:
             for date_ in date_list:      
-                mask_ = (df_stamp['date'] == date_).values * (df_stamp['site_name'] == stations_).values 
+                mask_ = (df_stamp['date'] == date_).values * (df_stamp['sitename'] == int(stations_)).values 
                 bar.set_description("%s - %s - num %d" % (date_, stations_, sum(mask_ == True)))
                 if sum(mask_ == True)  > 0:
 
@@ -351,6 +400,7 @@ class DatasetCUEE(data.Dataset):
                     masked_data_stamp = data_stamp[mask_,:]
  
                     masked_data_sky_condition =  df_data_sky_condition[mask_,:]
+                    masked_data_sitename = df_sitename[mask_,:]
                     num_sample_per_day = sum(mask_ == True) - self.seq_len - self.pred_len + 1 
  
                     for index in range(num_sample_per_day):
@@ -358,7 +408,7 @@ class DatasetCUEE(data.Dataset):
                         s_begin = index
                         s_end   = s_begin + self.seq_len
 
-                        ov_begin = s_end - 1  - self.label_len 
+                        ov_begin = s_end - 1  - self.label_len # label_len = overlap_len, (we want overlap_len = seq_len)
                         ov_end   = ov_begin  + self.pred_len  
                 
                         r_begin = s_end  - 1
@@ -368,7 +418,8 @@ class DatasetCUEE(data.Dataset):
                         seq_v  = masked_data_v[ov_begin: ov_end, :]      # seq_v = torch.zeros(self.pred_len, masked_data_x.shape[-1]) # 1 x Feat size   
                         seq_y  = masked_data_y[r_begin:  r_end,  :] 
 
-                        seq_sky_condition = masked_data_sky_condition[r_begin:r_end, :] 
+                        seq_sky_condition = masked_data_sky_condition[r_begin:r_end, :]
+                        seq_sitename = masked_data_sitename[r_begin:r_end, :]
 
                         seq_x_mark = masked_data_stamp[s_begin:s_end]
                         seq_v_mark = masked_data_stamp[ov_begin:ov_end] 
@@ -390,7 +441,8 @@ class DatasetCUEE(data.Dataset):
                         self.seq_x_list.append(seq_x)
                         self.seq_v_list.append(seq_v)
                         self.seq_y_list.append(seq_y)
-                        self.seq_sky_condition_list.append(seq_sky_condition) 
+                        self.seq_sky_condition_list.append(seq_sky_condition)
+                        self.seq_sitename_list.append(seq_sitename)
 
                         self.seq_x_mark_list.append(seq_x_mark)
                         self.seq_v_mark_list.append(seq_v_mark)
@@ -406,6 +458,7 @@ class DatasetCUEE(data.Dataset):
         seq_y = self.h5file["seq_y"][index] 
         seq_v = self.h5file["seq_v"][index]
         seq_sky_condition = self.h5file["seq_sky_condition"][index]
+        seq_sitename = self.h5file["seq_sitename"][index]
  
 
         seq_x_mark = self.h5file["seq_x_mark"][index] 
@@ -416,8 +469,9 @@ class DatasetCUEE(data.Dataset):
         date_time_y = self.date_time_y_list[index] 
         date_time_x = np.array([ts.timestamp() for ts in self.date_time_x_list[index]], dtype=np.int64)
         date_time_y = np.array([ts.timestamp() for ts in self.date_time_y_list[index]], dtype=np.int64)
+        # pdb.set_trace()
 
-        return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark , date_time_x, date_time_y, seq_sky_condition
+        return seq_x, seq_y, seq_v, seq_x_mark, seq_y_mark, seq_v_mark , date_time_x, date_time_y, seq_sky_condition, seq_sitename
 
 
     def __len__(self): 

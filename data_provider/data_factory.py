@@ -11,6 +11,9 @@ data_dict = {
     'custom': Dataset_Custom, 
     'CUEE_PMAPS':  DatasetCUEE,
     'CUEE_PMAPS_NIGHT':  DatasetCUEE,
+    'solarmap_exp': DatasetCUEE,
+    'solarmap': DatasetCUEE,
+    'true_cloud_relation': DatasetCUEE,
 }
 
 
@@ -48,7 +51,7 @@ def data_provider(args, flag):
         print("flag can only be set to one of these: 'test' / 'val' / 'pred' / 'train'")
         KeyError
 
-    if (args.data == "CUEE_PMAPS") or (args.data == "CUEE_PMAPS_NIGHT"):
+    if (args.data == "CUEE_PMAPS") or (args.data == "CUEE_PMAPS_NIGHT") or (args.data == "solarmap_exp") or (args.data == "solarmap") or (args.data == "true_cloud_relation") :
   
         data_set = Data(
             root_path=args.root_path,
@@ -62,7 +65,8 @@ def data_provider(args, flag):
             timeenc=timeenc,
             freq=freq,
             train_only=train_only,
-            tag=args.data
+            tag=args.data,
+            option_Ihat1=args.option_Ihat1
         ) 
 
     else:

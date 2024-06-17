@@ -11,7 +11,7 @@ pred_len=1
 label_len=0  
 moving_avg=4
 batch_size=32
-seq_len=4
+seq_len=5
 target=I
 
 
@@ -21,10 +21,10 @@ num_features=11
 
 model_name=RLSTM 
 mode=val # test val 
-d_model=50
-e_layer=5 
+d_model=16
+# e_layer=5 
 
-for seq_len in 1
+for e_layer in 1 5 10 15 20 25 50
 do 
 python -u infer_longExp.py \
     --mode $mode \
@@ -50,6 +50,6 @@ python -u infer_longExp.py \
     --des 'Exp' \
     --loss 'l1' \
     --scheduler 'ReduceLROnPlateau' \
-    --train_epochs 100 \
-    --batch_size $batch_size --learning_rate 0.001 --itr 1  
+    --train_epochs 50 \
+    --batch_size $batch_size --learning_rate 0.001 --itr 1 \ 
 done

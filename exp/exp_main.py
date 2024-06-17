@@ -1,6 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, RLSTM, RLSTM_ver2, Transformer, DLinear, Linear, NLinear, PatchTST
+from models import Informer, Autoformer, RLSTM, RLSTM_ver2, Transformer, DLinear, Linear, NLinear, PatchTST, BiasCorrModel
 
 
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
@@ -43,7 +43,8 @@ class Exp_Main(Exp_Basic):
             'Linear': Linear,
             'PatchTST': PatchTST,
             'RLSTM': RLSTM,
-            'RLSTM_ver2': RLSTM_ver2
+            'RLSTM_ver2': RLSTM_ver2,
+            'BiasCorrModel': BiasCorrModel
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -118,7 +119,7 @@ class Exp_Main(Exp_Basic):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        save_settings_dict(self.args, setting, self.num_params) 
+        save_settings_dict(self.args, setting, self.num_params, folder=self.args.checkpoints) 
   
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
@@ -152,7 +153,7 @@ class Exp_Main(Exp_Basic):
             self.model.train() 
 
             pbar = tqdm(train_loader)
-            for i, (batch_x, batch_y,  batch_v, batch_x_mark, batch_y_mark,  batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(pbar):  ###### <<<<
+            for i, (batch_x, batch_y,  batch_v, batch_x_mark, batch_y_mark,  batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition, batch_sitename) in enumerate(pbar):  ###### <<<<
             
                 iter_count += 1
                 model_optim.zero_grad()
@@ -161,12 +162,11 @@ class Exp_Main(Exp_Basic):
                 outputs = self.__myfeedforward(batch_x,  batch_v, batch_x_mark, batch_v_mark)
 
                 batch_y = batch_y.float().to(self.device)  
-
                 loss    = criterion(outputs, batch_y)
                 train_loss.append(loss.item())
                  
                 output_rev_scale = train_data.inverse_transform_y(outputs.view(-1,1).detach().cpu().numpy())
-                target_rev_scale = train_data.inverse_transform_y(batch_y.view(-1,1).detach().cpu().numpy())
+                target_rev_scale = train_data.inverse_transform_y(batch_y.view(-1,1).detach().cpu().numpy()) 
                  
                 train_mae  = MAE(output_rev_scale, target_rev_scale) 
                 train_MAE.append(train_mae) 
@@ -237,7 +237,7 @@ class Exp_Main(Exp_Basic):
         self.model.eval()
         with torch.no_grad():
 
-            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(vali_loader):  ###### <<<<
+            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition, batch_sitename) in enumerate(vali_loader):  ###### <<<<
                 
                 outputs = self.__myfeedforward(batch_x,  batch_v, batch_x_mark, batch_v_mark)
 
@@ -281,13 +281,14 @@ class Exp_Main(Exp_Basic):
         test_data, test_loader = self._get_data(flag='test')
         
         print('Loading model : [%s]' % setting) 
-        self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+        self.model.load_state_dict(torch.load(os.path.join(self.args.checkpoints, setting, 'checkpoint.pth')))
          
         preds = []
         trues = []
         inputx = []
         datetimes = []
         sky_conditions = []
+        sitenames = []
         folder_path = './run_testing/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -295,12 +296,13 @@ class Exp_Main(Exp_Basic):
         self.model.eval()
         with torch.no_grad():
             
-            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition) in enumerate(test_loader):
+            for i, (batch_x, batch_y, batch_v, batch_x_mark, batch_y_mark, batch_v_mark, batch_datetime_x, batch_datetime_y, batch_sky_condition, batch_sitename) in enumerate(test_loader):
  
                 outputs = self.__myfeedforward(batch_x, batch_v, batch_x_mark, batch_v_mark)
  
                 outputs = outputs.cpu().numpy()
                 batch_y = batch_y.numpy()
+                batch_sitename = batch_sitename.numpy()
 
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
@@ -310,6 +312,7 @@ class Exp_Main(Exp_Basic):
                 inputx.append(batch_x.detach().cpu().numpy()) 
                 datetimes.append(batch_datetime_y) 
                 sky_conditions.append(batch_sky_condition)
+                sitenames.append(batch_sitename)
                 if i % 1000 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
@@ -327,6 +330,8 @@ class Exp_Main(Exp_Basic):
 
         datetimes      = np.concatenate(datetimes, axis=0)
         sky_conditions = np.concatenate(sky_conditions, axis=0)
+        sitenames      = np.concatenate(sitenames, axis=0)
+
  
 
         preds_rev = test_data.inverse_transform_y(preds[:,0,:])
@@ -337,7 +342,7 @@ class Exp_Main(Exp_Basic):
         total_MAE_rev, _, total_RMSE_rev, mape, mspe, rse, corr = metric(preds_rev, trues_rev) 
            
         # result save
-        folder_path = './testing/' + setting + '/'
+        folder_path = './testing_true_cloud_relation/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path) 
         
@@ -346,12 +351,13 @@ class Exp_Main(Exp_Basic):
         print('revs: rmse:{}, mae:{}'.format(total_RMSE_rev, total_MAE_rev))
  
         result_dict = {}
-        result_dict["inputx"] = inputx_np
-        result_dict["preds"] = preds.reshape(-1,1)
-        result_dict["trues"] = trues.reshape(-1,1)
-        result_dict["preds_rev"] = preds_rev
-        result_dict["trues_rev"] = trues_rev
+        # result_dict["inputx"] = inputx_np
+        # result_dict["preds"] = preds.reshape(-1,1)
+        # result_dict["trues"] = trues.reshape(-1,1)
         result_dict['datetime'] = datetimes
+        result_dict['sitename'] = [int(site[0]) for site in sitenames]
+        result_dict["Ihat"] = preds_rev
+        result_dict["I"] = trues_rev
  
 
         # Initialize lists to store individual sky condition components
@@ -371,8 +377,9 @@ class Exp_Main(Exp_Basic):
         sky_condition_poc  = np.array(sky_condition_poc)
 
         # Add these to your result_dict
-        result_dict['sky_condition_kbar'] = sky_condition_kbar
-        result_dict['sky_condition_poc'] = sky_condition_poc
+        result_dict['k_bar'] = sky_condition_kbar
+        result_dict['condition'] = sky_condition_poc
+
          
 
         # np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe,rse, corr]))
@@ -391,7 +398,7 @@ class Exp_Main(Exp_Basic):
         # np.save(folder_path + 'true.npy', trues)
         # np.save(folder_path + 'x.npy', inputx)
 
-        with open(os.path.join(folder_path, 'result_dict.csv'), 'w', newline='') as f:
+        with open(os.path.join(folder_path, 'result.csv'), 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(result_dict.keys())
 
