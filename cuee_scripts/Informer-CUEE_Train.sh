@@ -16,27 +16,26 @@ target=I
 seq_len=5
 model_name=Informer
 feature_type=MS
-num_features=11  # len(features_list) -1 --> I_LGBM, Ireg = 11, I_nwp = 10, Iclr = 10, Informer=11
-d_model=64
+num_features=7  # len(features_list) -1 --> I_LGBM, Ireg = 11, I_nwp = 10, Iclr = 10, Informer=11
+d_model=16
 e_layer=2
-embed_type=2
+embed_type=0
 moving_avg=4
-num_features_overlap=9 # num_features_overlap = 1 (Iclr, Inwp), num_features_overlap = 2 (I_LGBM, Ireg), Informer=9
-# m2_name=Informer
-folder_data=solarmap
-checkpoints=checkpoints_solarmap
+num_features_overlap=5  
+folder_data=true_cloud_relation_08JUL24
+checkpoints=checkpoints_true_cloud_relation_08JUL24
 m2_name=Informer
 
-for option_Ihat1 in I; do
+for option_Ihat1 in I_wo_nwp_wo_latlong; do
     echo "Running model with option_Ihat1: $option_Ihat1"
 
     # Execute the Python script with the specified parameters
     python -u run_longExp.py \
         --is_training 1 \
         --root_path ./dataset/$folder_data/ \
-        --test_data_path test_data.csv \
-        --valid_data_path val_data.csv \
-        --train_data_path train_data.csv \
+        --test_data_path test_data_true_relation_lgbm_new_arrange.csv \
+        --valid_data_path val_data_true_relation_lgbm_new_arrange.csv \
+        --train_data_path train_data_true_relation_lgbm_new_arrange.csv \
         --model_id ${folder_data}_${seq_len}'_'${pred_len} \
         --model $model_name \
         --data $folder_data \
@@ -62,6 +61,7 @@ for option_Ihat1 in I; do
         --train_epochs 100 \
         --batch_size $batch_size \
         --learning_rate 0.001 \
+        --is_noscaley \
         --itr 1 \
         --option_Ihat1 $option_Ihat1 \
         --m2_name $m2_name \

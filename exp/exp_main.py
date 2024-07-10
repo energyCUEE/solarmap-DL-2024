@@ -131,8 +131,8 @@ class Exp_Main(Exp_Basic):
             scaler = torch.cuda.amp.GradScaler()
 
         if self.args.scheduler == "ReduceLROnPlateau":
-            scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim,
-                                                mode='min', factor=0.5, patience=3, verbose=True ) 
+            scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim, mode='min', factor=0.5, patience=1, verbose=True ) 
+            # scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim,  mode='min', factor=0.5, patience=3, verbose=True ) 
         else:    
             scheduler = lr_scheduler.OneCycleLR(optimizer = model_optim,
                                                 steps_per_epoch = train_steps,
@@ -342,7 +342,7 @@ class Exp_Main(Exp_Basic):
         total_MAE_rev, _, total_RMSE_rev, mape, mspe, rse, corr = metric(preds_rev, trues_rev) 
            
         # result save
-        folder_path = './testing_true_cloud_relation/' + setting + '/'
+        folder_path = './testing_true_cloud_relation_pt1/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path) 
         

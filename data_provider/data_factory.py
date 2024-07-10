@@ -9,11 +9,12 @@ data_dict = {
     'ETTm1': Dataset_ETT_minute,
     'ETTm2': Dataset_ETT_minute,
     'custom': Dataset_Custom, 
-    'CUEE_PMAPS':  DatasetCUEE,
-    'CUEE_PMAPS_NIGHT':  DatasetCUEE,
-    'solarmap_exp': DatasetCUEE,
-    'solarmap': DatasetCUEE,
-    'true_cloud_relation': DatasetCUEE,
+    # 'CUEE_PMAPS':  DatasetCUEE,
+    # 'CUEE_PMAPS_NIGHT':  DatasetCUEE,
+    # 'solarmap_exp': DatasetCUEE,
+    # 'solarmap': DatasetCUEE,
+    # 'true_cloud_relation': DatasetCUEE,
+    'true_cloud_relation_08JUL24': DatasetCUEE,
 }
 
 
@@ -51,7 +52,8 @@ def data_provider(args, flag):
         print("flag can only be set to one of these: 'test' / 'val' / 'pred' / 'train'")
         KeyError
 
-    if (args.data == "CUEE_PMAPS") or (args.data == "CUEE_PMAPS_NIGHT") or (args.data == "solarmap_exp") or (args.data == "solarmap") or (args.data == "true_cloud_relation") :
+    #if (args.data == "CUEE_PMAPS") or (args.data == "CUEE_PMAPS_NIGHT") or (args.data == "solarmap_exp") or (args.data == "solarmap") or (args.data == "true_cloud_relation") or (args.data == "true_cloud_relation_08JUL24"):
+    if   (args.data == "true_cloud_relation_08JUL24"):
   
         data_set = Data(
             root_path=args.root_path,
@@ -66,7 +68,8 @@ def data_provider(args, flag):
             freq=freq,
             train_only=train_only,
             tag=args.data,
-            option_Ihat1=args.option_Ihat1
+            option_Ihat1=args.option_Ihat1,
+            is_noscaley= args.is_noscaley
         ) 
 
     else:

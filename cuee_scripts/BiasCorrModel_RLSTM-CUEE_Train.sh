@@ -13,7 +13,7 @@ target=I
 seq_len=5
 model_name=BiasCorrModel
 feature_type=MS
-num_features=10 # len(features_list) -1 --> I_LGBM, Ireg = 11, Inwp = 10, Iclr = 10 
+num_features=11 # len(features_list) -1 --> I_LGBM, Ireg = 11, Inwp = 10, Iclr = 10 
 d_model=64 
 e_layer=5
 moving_avg=4
@@ -25,7 +25,7 @@ folder_data=true_cloud_relation
 checkpoints=checkpoints_true_cloud_relation
 
 
-for option_Ihat1 in Inwp; do
+for option_Ihat1 in Ireg; do
     python -u run_longExp.py \
         --is_training 1 \
         --root_path ./dataset/${folder_data}/ \

@@ -13,25 +13,25 @@ target=I
 seq_len=5
 model_name=Transformer
 feature_type=MS
-num_features=11 # len(features_list) -1 --> I_LGBM = 11, Inwp = 10, Iclr = 10
+num_features=11 
 d_model=16 
 e_layer=2
-embed_type=2
+embed_type=0
 moving_avg=4
-num_features_overlap=9 # 1 : [Inwp, Iclr], 2 : [I_LGBM]
+num_features_overlap=9 
 
-# option_Ihat1=I_LGBM # Iclr, Inwp, I_LGBM
-folder_data=solarmap
-checkpoints=checkpoints_solarmap
+
+folder_data=true_cloud_relation_08JUL24
+checkpoints=checkpoints_true_cloud_relation_08JUL24
 m2_name=Transformer
 
 for option_Ihat1 in I; do
     python -u run_longExp.py \
         --is_training 1 \
         --root_path ./dataset/$folder_data/ \
-        --test_data_path test_data.csv \
-        --valid_data_path val_data.csv \
-        --train_data_path train_data.csv \
+        --test_data_path test_data_true_relation_lgbm_new_arrange.csv \
+        --valid_data_path val_data_true_relation_lgbm_new_arrange.csv \
+        --train_data_path train_data_true_relation_lgbm_new_arrange.csv \
         --model_id ${folder_data}_${seq_len}'_'${pred_len} \
         --model $model_name \
         --data $folder_data \

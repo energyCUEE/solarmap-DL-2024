@@ -13,24 +13,25 @@ target=I
 seq_len=5
 model_name=RLSTM
 feature_type=MS
-num_features=11 # len(features_list) -1 --> I_LGBM, Ireg = 11, Inwp = 10, Iclr = 10 
-d_model=64 
-e_layer=5
+num_features=11 # 9 7 
+d_model=128 
+e_layer=1
 moving_avg=4
 
 
-# option_Ihat1=Iclr # Iclr, Inwp, I_LGBM, Ireg ,if I_LGBM -->  num_features = 11
-folder_data=solarmap
-checkpoints=checkpoints_solarmap
 m2_name=RLSTM
+folder_data=true_cloud_relation_08JUL24
+checkpoints=checkpoints_true_cloud_relation_08JUL24
 
-for option_Ihat1 in I; do
+option_Ihat1=I #  I_wo_nwp I_wo_nwp_wo_latlong
+
+for seq_len in 5; do
     python -u run_longExp.py \
         --is_training 1 \
         --root_path ./dataset/${folder_data}/ \
-        --test_data_path test_data.csv \
-        --valid_data_path val_data.csv \
-        --train_data_path train_data.csv \
+        --test_data_path test_data_true_relation_lgbm_new_arrange.csv \
+        --valid_data_path val_data_true_relation_lgbm_new_arrange.csv \
+        --train_data_path train_data_true_relation_lgbm_new_arrange.csv \
         --model_id ${folder_data}_${seq_len}'_'${pred_len} \
         --model $model_name \
         --data ${folder_data} \

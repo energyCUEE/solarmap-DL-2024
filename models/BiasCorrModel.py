@@ -32,7 +32,10 @@ class Model(nn.Module):
         if self.m2_name == "RLSTM":
             ehat2 = self.M2(Feature_inp)  # ehat2 shape: (B, seq_len)
         else:
-            ehat2 = self.M2(Feature_inp, x_mark_enc, x_dec, x_mark_dec, enc_self_mask, dec_self_mask, dec_enc_mask)  # ehat2 shape: (B, seq_len, d_model)
+            # ehat2 = self.M2(Feature_inp, x_mark_enc, x_dec, x_mark_dec, enc_self_mask, dec_self_mask, dec_enc_mask)  # ehat2 shape: (B, seq_len, d_model)
+            ehat2 = self.M2(Feature_inp, x_mark_enc, x_dec, x_mark_dec)  # ehat2 shape: (B, seq_len, d_model)
+            
+            
 
         Ihat1 = Ihat1[:, -1].view(B, 1)  # Ihat1 shape: (B, 1)
 
