@@ -225,6 +225,7 @@ def get_args():
     ## RLSMT and Formers
     parser.add_argument('--dropout',    type=float, default=0.05, help='dropout')  
     parser.add_argument('--is_noscaley', action='store_true', help='apply scaling to y', default=False)
+    parser.add_argument('--is_noscalex', action='store_true', help='apply scaling to x', default=False)
 
     # optimization
     parser.add_argument('--num_workers',   type=int, default=10, help='data loader num workers')
@@ -345,6 +346,10 @@ def set_folder_name(args, ii):
 
     if args.is_noscaley: 
         setting = "%s_%s" % (setting, "NotScaleY")
+
+    if args.is_noscalex: 
+        setting = "%s_%s" % (setting, "NotScaleX")
+    
             
     return setting
 
@@ -673,3 +678,48 @@ def evaluation_skycondition(folder, condition_spit_sky_condition="k_bar"):
     fig.tight_layout()
     fig.subplots_adjust(top=0.85)
     plt.savefig(os.path.join(stats_ckp_folder, 'test_metric-%s.png' % condition_spit_sky_condition)) 
+
+
+def scale_latt(xarray, LATT_C= 0.5*(5.572250 + 20.509355), LATT_MAX=20.509355, LATT_MIN=5.572250):
+    return (xarray - LATT_C)/(LATT_MAX - LATT_MIN) 
+
+def scale_long(xarray, LONG_C= 0.5*(105.688477 + 97.338867), LONG_MAX=105.688477, LONG_MIN=97.338867):
+    return (xarray - LONG_C)/(LONG_MAX - LONG_MIN) 
+
+
+def scaling_CI(xarray, mean=59.63, std=60.02):
+    xarray = (xarray - mean)/std
+
+
+def scaling_R(xarray, mean=100.95, std=55.78):
+    xarray = (xarray - mean)/std
+
+
+def scaling(xarray, tag):
+    if tag == "Iclr":
+        xarray = xarray/1200
+    elif (tag == "CI" ) or (tag == "R" ): 
+        xarray = xarray/255
+    elif (tag == "hour_encode1" ) : 
+        xarray = xarray/5.5
+    elif (tag == "day") : 
+        xarray = xarray/366 
+    elif (tag == "month") : 
+        xarray = xarray/12
+    elif (tag == "minute") : 
+        xarray = xarray/60    
+    elif (tag == "latt") : 
+        xarray = scale_latt(xarray)
+    elif (tag == "long") : 
+        xarray = scale_long(xarray)
+    else:
+        raise KeyError
+
+    return xarray
+
+def scaling_LxF(xarray, columns=['Iclr', 'CI', "R", 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long']):
+
+    for tag_indx, tag in enumerate(columns):
+        xarray[:,tag_indx] = scaling(xarray[:,tag_indx], tag)
+
+    return xarray

@@ -69,7 +69,8 @@ def data_provider(args, flag):
             train_only=train_only,
             tag=args.data,
             option_Ihat1=args.option_Ihat1,
-            is_noscaley= args.is_noscaley
+            is_noscaley= args.is_noscaley,
+            is_noscalex= args.is_noscalex
         ) 
 
     else:

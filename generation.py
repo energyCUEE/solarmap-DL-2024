@@ -13,8 +13,7 @@ if __name__ == '__main__':
 
     # run this file with ./cuee_scripts/Data_generation.sh
     parser = get_args()  
-    args = parser.parse_args()
-
+    args = parser.parse_args() 
 
     # random seed
     fix_seed = args.random_seed

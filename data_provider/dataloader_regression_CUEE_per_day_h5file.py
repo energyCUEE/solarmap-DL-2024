@@ -14,6 +14,7 @@ import os
 from utils.timefeatures import time_features
 import pickle
 import h5py
+from utils.tools import scaling_LxF
 
 CUEE_ROOT = os.path.join(os.getcwd(),'data')
 CUEE_DATA = 'updated_measurement_Iclr_new.csv'
@@ -50,7 +51,7 @@ def choose_stations(data, station_num_list=["ISL052"]):
 class DatasetCUEE(data.Dataset):
     def __init__(self,  root_path = CUEE_ROOT, flag='train', size=None, features='S',  
                 test_data_path=PMAS_CUEE_TEST, valid_data_path=PMAS_CUEE_VALID, train_data_path=PMAS_CUEE_TRAIN, data_path=CUEE_DATA,   
-                target='I', scale=True, timeenc=0, freq='h', train_only=False, tag="CUEE_PMAPS", option_Ihat1 = 'I_LGBM', DEBUGMode=False, is_noscaley=False):
+                target='I', scale=True, timeenc=0, freq='h', train_only=False, tag="CUEE_PMAPS", option_Ihat1 = 'I_LGBM', DEBUGMode=False, is_noscaley=False, is_noscalex=False):
         super(DatasetCUEE, self).__init__()
 
         self.DEBUGMode = DEBUGMode
@@ -81,8 +82,10 @@ class DatasetCUEE(data.Dataset):
         self.freq       = freq
         self.train_only = train_only
         self.is_noscaley = is_noscaley
-        self.scaler_x = StandardScaler()
-        self.scaler_v = StandardScaler()
+        self.is_noscalex = is_noscalex
+        if not(self.is_noscalex):
+            self.scaler_x = StandardScaler()
+            self.scaler_v = StandardScaler()
         if not(self.is_noscaley):
             self.scaler_y = StandardScaler()
         self.flag = flag
@@ -139,23 +142,22 @@ class DatasetCUEE(data.Dataset):
         # Datetime, sitename, is_target: will be used in  df_stamp (indexing information)
         # A subset of the DATA_COLUMN will be selected by features_list and overlap_list for the input and overlap features.
         # The I column will be used as the target.
-
         df_train_raw = train_data[DATA_COLUMN].copy()
-        #df_train_raw = train_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy()
-        df_train_raw['Datetime']     = pd.to_datetime(df_train_raw['Datetime'], utc=False) # Should be false If False == Thailand Local Time (Guessing)
+        df_train_raw['Datetime'] = pd.to_datetime(df_train_raw['Datetime'], utc=False).dt.tz_localize(None)
+  
+
+        #df_train_raw = train_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy() 
         df_train_raw["hour"]         = [ date.hour   for date in df_train_raw['Datetime'] ]
-        df_train_raw['day']          = [ date.day    for date in df_train_raw['Datetime'] ]
+        df_train_raw['day']          = [ date.dayofyear    for date in df_train_raw['Datetime'] ]
         df_train_raw['month']        = [ date.month  for date in df_train_raw['Datetime'] ]
         df_train_raw['minute']       = [ date.minute for date in df_train_raw['Datetime'] ]
 
         #'updated_measurement_Iclr_new.csv'   
         raw_data       =  read_data[DATA_COLUMN].copy()
-        #raw_data       =  read_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy()
-        # pdb.set_trace() 
-
-        raw_data['Datetime']     = pd.to_datetime(raw_data['Datetime'], utc=False) # Should be false If False == Thailand Local Time (Guessing)
+        #raw_data       =  read_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy() 
+        raw_data['Datetime'] = pd.to_datetime(raw_data['Datetime'], utc=False).dt.tz_localize(None)  
         raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
-        raw_data['day']          = [ date.day    for date in raw_data['Datetime'] ]
+        raw_data['day']          = [ date.dayofyear    for date in raw_data['Datetime'] ]
         raw_data['month']        = [ date.month  for date in raw_data['Datetime'] ]
         raw_data['minute']       = [ date.minute for date in raw_data['Datetime'] ] 
          
@@ -201,12 +203,25 @@ class DatasetCUEE(data.Dataset):
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
 
-        elif self.option_Ihat1 == 'I_wo_nwp':
+        elif self.option_Ihat1 == 'I_R':
+            features_list = ['Iclr', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+            overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
+
+
+        elif (self.option_Ihat1 == 'I_wo_nwp') or (self.option_Ihat1 == 'I_wo_nwp_ltime_doy'):
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long' ]
+            overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long' ]
+
+        elif self.option_Ihat1 == 'I_R_wo_nwp':
+            features_list = ['Iclr', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long' ]
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long' ]
 
         elif self.option_Ihat1 == 'I_wo_nwp_wo_latlong':
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute']
+            overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute' ]
+
+        elif self.option_Ihat1 == 'I_R_wo_nwp_wo_latlong':
+            features_list = ['Iclr', 'R', 'hour_encode1', 'day', 'month', 'minute']
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute' ]
         
         elif self.option_Ihat1 == 'I_optionA':
@@ -240,25 +255,25 @@ class DatasetCUEE(data.Dataset):
 
         # get sitename 
         df_sitename = df_raw[['sitename']].values
-
-
-        # normalization
-        self.scaler_x.fit(train_data_x.values) 
-        data_x = self.scaler_x.transform(df_data_x.values)
+ 
+        # normalization     
+        data_x = scaling_LxF(df_data_x.values, columns=features_list) 
 
         # check len of overlap_list
-        if len(overlap_list) == 1 :
-            self.scaler_v.fit(train_data_v.values.reshape(-1,1)) 
-            data_v = self.scaler_v.transform(df_data_v.values.reshape(-1,1))
-        else:
-            self.scaler_v.fit(train_data_v.values) 
-            data_v = self.scaler_v.transform(df_data_v.values)
+        if len(overlap_list) == 1: 
+            data_v = scaling_LxF(df_data_v.values.reshape(-1,1), columns=overlap_list)  
+        else: 
+            data_v = scaling_LxF(df_data_v.values, columns=overlap_list)   
 
         if not(self.is_noscaley):
             self.scaler_y.fit(train_data_y.values.reshape(-1,1)) 
             data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1))        
         else:
-            data_y = df_data_y.values.reshape(-1,1)
+            data_y = df_data_y.values.reshape(-1,1) 
+
+            # pickle.dump(self.scaler_x, open(os.path.join(self.folder, "Scaler_x.pkl"), 'wb'))
+            # pickle.dump(self.scaler_v, open(os.path.join(self.folder, "Scaler_v.pkl"), 'wb')) 
+
 
         isfiles_list = []
         for file_suffix in SUFFIX_SAVED_FILES_LIST:
@@ -269,8 +284,7 @@ class DatasetCUEE(data.Dataset):
         
         else:
             # time stamp  
-            df_stamp = df_raw.loc[:,['Datetime', 'sitename', 'is_target']].copy()  
-            df_stamp['Datetime'] = pd.to_datetime(df_stamp.Datetime)   
+            df_stamp = df_raw.loc[:,['Datetime', 'sitename', 'is_target']].copy()   
 
             if self.timeenc == 0:
                 df_stamp['month']   = df_stamp.Datetime.apply(lambda row: row.month, 1)
@@ -280,8 +294,8 @@ class DatasetCUEE(data.Dataset):
                 df_stamp['min']     = df_stamp.Datetime.apply(lambda row: row.minute, 1)    
                 data_stamp          = df_stamp.drop(['Datetime'],  axis=1).values 
                 
-            elif self.timeenc == 1:
-                data_stamp = time_features(pd.to_datetime(df_stamp['Datetime'].values), freq=self.freq)
+            elif self.timeenc == 1: 
+                data_stamp = time_features(pd.to_datetime(df_stamp['Datetime'].values, utc=False), freq=self.freq)
                 data_stamp = data_stamp.transpose(1, 0) 
 
             date_time = npdatetime_to_string(df_stamp['Datetime'].values.copy())   
@@ -486,13 +500,20 @@ class DatasetCUEE(data.Dataset):
             return self.scaler_y.inverse_transform(data_y)
         else:
             return data_y
+        
+        self.is_noscalex
     
     def inverse_transform_x(self, data_x):
-        return self.scaler_x.inverse_transform(data_x)
+        if not(self.is_noscalex):
+            return self.scaler_x.inverse_transform(data_x)
+        else:
+            return data_x
     
     def inverse_transform_v(self, data_v):
-        return self.scaler_v.inverse_transform(data_v)
- 
+        if not(self.is_noscalex):
+            return self.scaler_v.inverse_transform(data_v)
+        else:
+            return data_v
 
 if __name__ == "__main__":
  
