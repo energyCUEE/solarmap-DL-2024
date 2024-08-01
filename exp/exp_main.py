@@ -37,14 +37,13 @@ class Exp_Main(Exp_Basic):
         model_dict = {
             'Autoformer': Autoformer,
             'Transformer': Transformer,
-            'Informer': Informer,
-            'DLinear': DLinear,
-            'NLinear': NLinear,
-            'Linear': Linear,
-            'PatchTST': PatchTST,
-            'RLSTM': RLSTM,
-            'RLSTM_ver2': RLSTM_ver2,
-            'BiasCorrModel': BiasCorrModel
+            'Informer':   Informer,
+            'DLinear':    DLinear,
+            'NLinear':    NLinear,
+            'Linear':     Linear,
+            'PatchTST':   PatchTST,
+            'RLSTM':      RLSTM,
+            'RLSTM_ver2': RLSTM_ver2
         }
         model = model_dict[self.args.model].Model(self.args).float()
 

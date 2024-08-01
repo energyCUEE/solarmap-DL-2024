@@ -1,19 +1,8 @@
 from data_provider.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom, Dataset_Pred
-from data_provider.dataloader_regression_CUEE_per_day_h5file import  DatasetCUEE 
-from torch.utils.data import DataLoader
+from data_provider.dataloader_cuee import  DatasetCUEE  
 import pdb
 
 data_dict = {
-    'ETTh1': Dataset_ETT_hour,
-    'ETTh2': Dataset_ETT_hour,
-    'ETTm1': Dataset_ETT_minute,
-    'ETTm2': Dataset_ETT_minute,
-    'custom': Dataset_Custom, 
-    # 'CUEE_PMAPS':  DatasetCUEE,
-    # 'CUEE_PMAPS_NIGHT':  DatasetCUEE,
-    # 'solarmap_exp': DatasetCUEE,
-    # 'solarmap': DatasetCUEE,
-    # 'true_cloud_relation': DatasetCUEE,
     'true_cloud_relation_08JUL24': DatasetCUEE,
 }
 
@@ -52,7 +41,6 @@ def data_provider(args, flag):
         print("flag can only be set to one of these: 'test' / 'val' / 'pred' / 'train'")
         KeyError
 
-    #if (args.data == "CUEE_PMAPS") or (args.data == "CUEE_PMAPS_NIGHT") or (args.data == "solarmap_exp") or (args.data == "solarmap") or (args.data == "true_cloud_relation") or (args.data == "true_cloud_relation_08JUL24"):
     if   (args.data == "true_cloud_relation_08JUL24"):
   
         data_set = Data(
