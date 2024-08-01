@@ -1,11 +1,10 @@
 import pdb
 
 import torch.utils.data as data
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
-import numpy as np
-import torch 
+import numpy as np 
 import glob
 import pandas as pd
 import matplotlib.pyplot as plt 
@@ -83,11 +82,10 @@ class DatasetCUEE(data.Dataset):
         self.train_only = train_only
         self.is_noscaley = is_noscaley
         self.is_noscalex = is_noscalex
-        if not(self.is_noscalex):
-            self.scaler_x = StandardScaler()
-            self.scaler_v = StandardScaler()
+ 
         if not(self.is_noscaley):
             self.scaler_y = StandardScaler()
+
         self.flag = flag
         self.tag = tag
         self.option_Ihat1 = option_Ihat1
@@ -145,16 +143,13 @@ class DatasetCUEE(data.Dataset):
         df_train_raw = train_data[DATA_COLUMN].copy()
         df_train_raw['Datetime'] = pd.to_datetime(df_train_raw['Datetime'], utc=False).dt.tz_localize(None)
   
-
-        #df_train_raw = train_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy() 
+ 
         df_train_raw["hour"]         = [ date.hour   for date in df_train_raw['Datetime'] ]
         df_train_raw['day']          = [ date.dayofyear    for date in df_train_raw['Datetime'] ]
         df_train_raw['month']        = [ date.month  for date in df_train_raw['Datetime'] ]
         df_train_raw['minute']       = [ date.minute for date in df_train_raw['Datetime'] ]
-
-        #'updated_measurement_Iclr_new.csv'   
-        raw_data       =  read_data[DATA_COLUMN].copy()
-        #raw_data       =  read_data[['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'Ireg']].copy() 
+ 
+        raw_data       =  read_data[DATA_COLUMN].copy() 
         raw_data['Datetime'] = pd.to_datetime(raw_data['Datetime'], utc=False).dt.tz_localize(None)  
         raw_data["hour"]         = [ date.hour   for date in raw_data['Datetime'] ]
         raw_data['day']          = [ date.dayofyear    for date in raw_data['Datetime'] ]
@@ -173,69 +168,20 @@ class DatasetCUEE(data.Dataset):
  
         
         ## create option for select the list of features and overlap_list
-        ### **note : for features_list in the first values should be the same as option_Ihat1
-        
-        if self.option_Ihat1  == 'Iclr':
-            features_list = ['Iclr', 'Inwp', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
-            overlap_list = ['Inwp']
-
-        elif self.option_Ihat1 == 'Inwp':
-            features_list = ['Inwp', 'Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
-            overlap_list = ['Iclr']
-
-        elif self.option_Ihat1 == 'I_LGBM':
-            features_list = ['I_LGBM', 'Iclr', 'Inwp', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
-            overlap_list = ['Iclr', 'Inwp'] 
-        
-        # elif self.option_Ihat1 == 'I_LGBM_wo_nwp':
-        #     features_list = ['I_LGBM', 'Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long']
-        #     overlap_list = ['Iclr']
-        
-        elif self.option_Ihat1 == 'Ireg':
-            features_list = ['Ireg', 'Iclr', 'Inwp', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp']
-            overlap_list = ['Iclr', 'Inwp'] 
-        
-        # elif self.option_Ihat1 == 'Ireg_wo_nwp':
-        #     features_list = ['Ireg', 'Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long']
-        #     overlap_list = ['Iclr'] 
-
-        elif (self.option_Ihat1 == 'I') or (self.option_Ihat1 == 'I_ltime_doy'):
+        ### **note : for features_list in the first values should be the same as option_Ihat1 
+        if (self.option_Ihat1 == 'I'):
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
 
-        elif self.option_Ihat1 == 'I_R':
-            features_list = ['Iclr', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-            overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-
-
-        elif (self.option_Ihat1 == 'I_wo_nwp') or (self.option_Ihat1 == 'I_wo_nwp_ltime_doy'):
+        elif (self.option_Ihat1 == 'I_wo_nwp'):
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long' ]
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long' ]
 
-        elif self.option_Ihat1 == 'I_R_wo_nwp':
-            features_list = ['Iclr', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long' ]
-            overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long' ]
-
-        elif self.option_Ihat1 == 'I_wo_nwp_wo_latlong'  or (self.option_Ihat1 == 'I_wo_nwp_wo_latlong_ltime_doy'):
+        elif self.option_Ihat1 == 'I_wo_nwp_wo_latlong' :
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute']
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute' ]
 
-        elif self.option_Ihat1 == 'I_R_wo_nwp_wo_latlong':
-            features_list = ['Iclr', 'R', 'hour_encode1', 'day', 'month', 'minute']
-            overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute' ]
-        
-        elif self.option_Ihat1 == 'I_optionA':
-            features_list = ['hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-            overlap_list  = ['hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-        
-        elif self.option_Ihat1 == 'I_optionB':
-            features_list = ['Iclr', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-            overlap_list  = ['Iclr', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-        
-        elif self.option_Ihat1 == 'I_optionC':
-            features_list = ['CI', 'R','hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-            overlap_list  = ['CI', 'R','hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
-        
+       
         # create date  for scaling data
         train_data_x = df_raw_train[features_list].copy()
         train_data_v = df_raw_train[overlap_list].copy()
@@ -270,10 +216,7 @@ class DatasetCUEE(data.Dataset):
             data_y = self.scaler_y.transform(df_data_y.values.reshape(-1,1))        
         else:
             data_y = df_data_y.values.reshape(-1,1) 
-
-            # pickle.dump(self.scaler_x, open(os.path.join(self.folder, "Scaler_x.pkl"), 'wb'))
-            # pickle.dump(self.scaler_v, open(os.path.join(self.folder, "Scaler_v.pkl"), 'wb')) 
-
+ 
 
         isfiles_list = []
         for file_suffix in SUFFIX_SAVED_FILES_LIST:
@@ -321,11 +264,6 @@ class DatasetCUEE(data.Dataset):
         print("Read %s" % os.path.join(self.folder , "date_time_y_list.npy")) 
         with open(os.path.join(self.folder , "date_time_y_list.npy"), 'rb') as fp:
             self.date_time_y_list  = pickle.load(fp)
-
-        # print("Read %s" % os.path.join(self.folder, "sky_condition_list.npy"))
-        # with  open(os.path.join(self.folder , "sky_condition_list.npy"), 'rb') as fp:
-        #     self.seq_sky_condition_list  = pickle.load(fp)
- 
         
     def __save_list_to_file(self): 
 
@@ -427,13 +365,7 @@ class DatasetCUEE(data.Dataset):
                         seq_v_mark = masked_data_stamp[ov_begin:ov_end] 
                         seq_y_mark = masked_data_stamp[r_begin:r_end]  
  
-
-                        # For debugging
-                        # print("Masked_target")
-                        # print(masked_target[index])
-                        # 
-                        # print("Time Y")
-                        # print(date_time_y)  
+ 
 
                         if self.DEBUGMode:
                             
@@ -449,9 +381,7 @@ class DatasetCUEE(data.Dataset):
                             date_time_x = masked_date_time[s_begin:s_end] 
                             date_time_v = masked_date_time[ov_begin:ov_end] 
                             date_time_y = masked_date_time[r_begin:r_end] 
-                            
-                        # print("Time V")
-                        # print(date_time_v)
+                             
  
                         self.seq_x_list.append(seq_x)
                         self.seq_v_list.append(seq_v)
@@ -501,19 +431,6 @@ class DatasetCUEE(data.Dataset):
         else:
             return data_y
         
-        self.is_noscalex
-    
-    def inverse_transform_x(self, data_x):
-        if not(self.is_noscalex):
-            return self.scaler_x.inverse_transform(data_x)
-        else:
-            return data_x
-    
-    def inverse_transform_v(self, data_v):
-        if not(self.is_noscalex):
-            return self.scaler_v.inverse_transform(data_v)
-        else:
-            return data_v
 
 if __name__ == "__main__":
  

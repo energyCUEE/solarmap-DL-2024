@@ -1,7 +1,6 @@
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
-from models import Informer, Autoformer, RLSTM, RLSTM_ver2, Transformer, DLinear, Linear, NLinear, PatchTST, BiasCorrModel
-
+from models import Informer, RLSTM, Transformer
 
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric, MAE
@@ -12,15 +11,10 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from torch import optim
-from torch.optim import lr_scheduler 
+from torch.optim import lr_scheduler  
+import os 
 
-import pdb
-import os
-import time
-
-import warnings
-import matplotlib.pyplot as plt
-import numpy as np
+import warnings 
 from utils.tools import save_settings_dict, evaluation_skycondition
 from utils.learning_tools import plot_gradients
 from tqdm import tqdm
@@ -34,16 +28,10 @@ class Exp_Main(Exp_Basic):
         super(Exp_Main, self).__init__(args)
 
     def _build_model(self):
-        model_dict = {
-            'Autoformer': Autoformer,
+        model_dict = { 
             'Transformer': Transformer,
-            'Informer':   Informer,
-            'DLinear':    DLinear,
-            'NLinear':    NLinear,
-            'Linear':     Linear,
-            'PatchTST':   PatchTST,
-            'RLSTM':      RLSTM,
-            'RLSTM_ver2': RLSTM_ver2
+            'Informer':   Informer, 
+            'RLSTM':      RLSTM, 
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -130,8 +118,7 @@ class Exp_Main(Exp_Basic):
             scaler = torch.cuda.amp.GradScaler()
 
         if self.args.scheduler == "ReduceLROnPlateau":
-            scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim, mode='min', factor=0.5, patience=1, verbose=True ) 
-            # scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim,  mode='min', factor=0.5, patience=3, verbose=True ) 
+            scheduler = lr_scheduler.ReduceLROnPlateau(optimizer = model_optim, mode='min', factor=0.5, patience=1, verbose=True )  
         else:    
             scheduler = lr_scheduler.OneCycleLR(optimizer = model_optim,
                                                 steps_per_epoch = train_steps,

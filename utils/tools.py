@@ -253,103 +253,39 @@ def get_args():
     return parser
 
 
-
 def set_folder_name(args, ii):
     # setting record of experiments
     dropout_argument = ("%.2f" % args.dropout).replace(".","p")
-    lr_argument = ('%.1E' % Decimal("%.5f" % args.learning_rate)).replace(".","p")
-
-    if args.use_Iclr:
-        dropout_argument = ("%.2f-ICLR-%.3f" % (args.dropout, args.input_dropout)).replace(".","p")
+    lr_argument = ('%.1E' % Decimal("%.5f" % args.learning_rate)).replace(".","p") 
+ 
      
-    if args.model == "PatchTST":
-        setting = '{}_{}_{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_ps{}_st{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
-        args.option_Ihat1,
-        args.model,
-        args.m2_name,
-        args.data, 
-        args.features,
-        args.enc_in, 
-        args.seq_len,
-        args.label_len,
-        args.pred_len,
-        args.patch_len,
-        args.stride,
-        args.d_model,
-        args.n_heads,
-        args.e_layers,
-        args.d_layers,
-        args.d_ff,
-        args.factor,
-        args.embed_type,
-        args.embed,
-        args.distil,
-        dropout_argument, 
-        args.loss,
-        args.train_epochs,  
-        lr_argument,
-        args.batch_size)
-
-    elif (args.model == "Autoformer") or (args.model == "DLinear"):
-        
-        setting = '{}_{}_{}_{}_mv{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
-        args.option_Ihat1,
-        args.model,
-        args.m2_name,
-        args.data,
-        args.moving_avg,
-        args.features,
-        args.enc_in, 
-        args.seq_len,
-        args.label_len,
-        args.pred_len,
-        args.d_model,
-        args.n_heads,
-        args.e_layers,
-        args.d_layers,
-        args.d_ff,
-        args.factor,
-        args.embed_type,
-        args.embed,
-        args.distil,
-        dropout_argument, 
-        args.loss,
-        args.train_epochs, 
-        lr_argument,
-        args.batch_size )
-    
-    else: 
-        setting = '{}_{}_{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
-        args.option_Ihat1,
-        args.model,
-        args.m2_name,
-        args.data, 
-        args.features,
-        args.enc_in, 
-        args.seq_len,
-        args.label_len,
-        args.pred_len,
-        args.d_model,
-        args.n_heads,
-        args.e_layers,
-        args.d_layers,
-        args.d_ff,
-        args.factor,
-        args.embed_type,
-        args.embed,
-        args.distil,
-        dropout_argument, 
-        args.loss,
-        args.train_epochs, 
-        lr_argument,
-        args.batch_size )
+    setting = '{}_{}_{}_{}_ft{}_enc{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_etype{}_eb{}_dt{}_dp{}_loss{}_ep{}_lr{}_bs{}'.format( 
+    args.option_Ihat1,
+    args.model,
+    args.m2_name,
+    args.data, 
+    args.features,
+    args.enc_in, 
+    args.seq_len,
+    args.label_len,
+    args.pred_len,
+    args.d_model,
+    args.n_heads,
+    args.e_layers,
+    args.d_layers,
+    args.d_ff,
+    args.factor,
+    args.embed_type,
+    args.embed,
+    args.distil,
+    dropout_argument, 
+    args.loss,
+    args.train_epochs, 
+    lr_argument,
+    args.batch_size )
 
     if args.is_noscaley: 
-        setting = "%s_%s" % (setting, "NotScaleY")
-
-    if args.is_noscalex: 
-        setting = "%s_%s" % (setting, "NotScaleX")
-    
+        setting = "%s_%s" % (setting, "NotScaleY") 
             
     return setting
 
