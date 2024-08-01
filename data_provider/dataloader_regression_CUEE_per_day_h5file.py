@@ -199,7 +199,7 @@ class DatasetCUEE(data.Dataset):
         #     features_list = ['Ireg', 'Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long']
         #     overlap_list = ['Iclr'] 
 
-        elif self.option_Ihat1 == 'I':
+        elif (self.option_Ihat1 == 'I') or (self.option_Ihat1 == 'I_ltime_doy'):
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']
 
@@ -216,7 +216,7 @@ class DatasetCUEE(data.Dataset):
             features_list = ['Iclr', 'R', 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long' ]
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute', 'latt', 'long' ]
 
-        elif self.option_Ihat1 == 'I_wo_nwp_wo_latlong':
+        elif self.option_Ihat1 == 'I_wo_nwp_wo_latlong'  or (self.option_Ihat1 == 'I_wo_nwp_wo_latlong_ltime_doy'):
             features_list = ['Iclr', 'CI', 'R', 'hour_encode1', 'day', 'month', 'minute']
             overlap_list  = ['Iclr', 'hour_encode1',  'day', 'month', 'minute' ]
 
@@ -256,8 +256,8 @@ class DatasetCUEE(data.Dataset):
         # get sitename 
         df_sitename = df_raw[['sitename']].values
  
-        # normalization     
-        data_x = scaling_LxF(df_data_x.values, columns=features_list) 
+        # normalization      
+        data_x = scaling_LxF(df_data_x.values, columns=features_list)  
 
         # check len of overlap_list
         if len(overlap_list) == 1: 

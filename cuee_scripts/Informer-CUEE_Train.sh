@@ -16,17 +16,17 @@ target=I
 seq_len=5
 model_name=Informer
 feature_type=MS
-num_features=9  # len(features_list) -1 --> I_LGBM, Ireg = 11, I_nwp = 10, Iclr = 10, Informer=11
+num_features=7  # len(features_list) -1 --> I_LGBM, Ireg = 11, I_nwp = 10, Iclr = 10, Informer=11
 d_model=16
 e_layer=2
 embed_type=0
 moving_avg=4
-num_features_overlap=7  
+num_features_overlap=5  
 folder_data=true_cloud_relation_08JUL24
 checkpoints=checkpoints_true_cloud_relation_08JUL24
 m2_name=Informer
 
-for option_Ihat1 in I_wo_nwp_ltime_doy; do
+for option_Ihat1 in I_wo_nwp_wo_latlong_ltime_doy; do
     echo "Running model with option_Ihat1: $option_Ihat1"
 
     # Execute the Python script with the specified parameters

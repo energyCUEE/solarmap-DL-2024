@@ -606,8 +606,7 @@ def evaluation_skycondition(folder, condition_spit_sky_condition="k_bar"):
  
 
     df['datetime'] = pd.to_datetime(df['datetime'], unit='s')
-    df['datetime'] = df['datetime'].dt.tz_localize('UTC')
-    df['datetime'] = df['datetime'].dt.tz_convert('Asia/Bangkok')
+    df['datetime'] = df['datetime'].dt.tz_localize(None) 
     df['datetime'] = df['datetime'].dt.strftime('%Y-%m-%d %H:%M:%S')
     df['hour'] = pd.to_datetime(df['datetime']).dt.hour
 
@@ -687,12 +686,19 @@ def scale_long(xarray, LONG_C= 0.5*(105.688477 + 97.338867), LONG_MAX=105.688477
     return (xarray - LONG_C)/(LONG_MAX - LONG_MIN) 
 
 
-def scaling_CI(xarray, mean=59.63, std=60.02):
-    xarray = (xarray - mean)/std
+# def scaling_CI(xarray, mean=59.63, std=60.02):
+#     xarray = (xarray - mean)/std
 
 
-def scaling_R(xarray, mean=100.95, std=55.78):
-    xarray = (xarray - mean)/std
+# def scaling_R(xarray, mean=100.95, std=55.78):
+#     xarray = (xarray - mean)/std
+
+def scale_temp(xarray, mean=28.49, std=7.49): 
+    return  (xarray - mean)/std
+
+
+def scale_Inwp(xarray, mean=477.29, std=291.91):
+    return (xarray - mean)/std
 
 
 def scaling(xarray, tag):
@@ -712,12 +718,19 @@ def scaling(xarray, tag):
         xarray = scale_latt(xarray)
     elif (tag == "long") : 
         xarray = scale_long(xarray)
+
+    elif (tag == "Tnwp") : 
+        xarray = scale_temp(xarray)
+
+    elif (tag == "Inwp") : 
+        xarray = scale_Inwp(xarray)
+
     else:
         raise KeyError
 
     return xarray
 
-def scaling_LxF(xarray, columns=['Iclr', 'CI', "R", 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long']):
+def scaling_LxF(xarray, columns=['Iclr', 'CI', "R", 'hour_encode1', 'day', 'month', 'minute', 'latt', 'long', 'Tnwp', 'Inwp']):
 
     for tag_indx, tag in enumerate(columns):
         xarray[:,tag_indx] = scaling(xarray[:,tag_indx], tag)
