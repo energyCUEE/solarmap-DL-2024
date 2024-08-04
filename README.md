@@ -19,7 +19,7 @@
 
 ## Quick start
 
-Install dependencies
+1. Install dependencies
 
 ```
 pip3 install torch torchvision torchaudio
@@ -27,9 +27,10 @@ pip3 install torch torchvision torchaudio
 
 for other packages, you can install via `requirements.txt`
 
+2. Create a new path `dataset/preprocessed_data`. Then, download our preprocessed data from: [Google drive](https://drive.google.com/drive/folders/1vsWaPqMnBp1Whd2GhcbVOdFj4JofFQ-M?usp=sharing) and put the csv files into `dataset/preprocessed_data` folder.
 
+3. Run the scrip to train and test the neural network. 
 
-Run the scrip to train and test the neural network. 
 Here, we prepare three shell script for each neural network, i.e., 
 
 - `LSTM-CUEE_Train.sh` for LSTM
@@ -41,7 +42,7 @@ Here, we prepare three shell script for each neural network, i.e.,
 ./cuee_scripts/LSTM-CUEE_Train.sh
 ```
 
-After training the model, you can perform inference only by setting `is_training` to 0 in the shell script  
+4. After training the model, you can perform inference only by setting `is_training` to 0 in the shell script  
 
  
 ``` 
