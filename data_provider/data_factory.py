@@ -3,7 +3,7 @@ from torch.utils.data import Dataset, DataLoader
 import pdb
 
 data_dict = {
-    'true_cloud_relation_08JUL24': DatasetCUEE,
+    'preprocessed_data': DatasetCUEE,
 }
 
 
@@ -41,7 +41,7 @@ def data_provider(args, flag):
         print("flag can only be set to one of these: 'test' / 'val' / 'pred' / 'train'")
         KeyError
 
-    if   (args.data == "true_cloud_relation_08JUL24"):
+    if   (args.data == "preprocessed_data"):
   
         data_set = Data(
             root_path=args.root_path,
