@@ -22,14 +22,19 @@
 1. Install dependencies
 
 ```
-pip3 install torch torchvision torchaudio
+conda create -n solarmap
+conda activate solarmap
+conda install pip
+pip install torch torchvision torchaudio
 ```
 
-for other packages, you can install via `requirements.txt`
+for other packages, you can install from `requirements.txt`, i.e., `pip install -r requirements.txt`
 
 2. Create a new path `dataset/preprocessed_data`. Then, download our preprocessed data from: [Google drive](https://drive.google.com/drive/folders/1vsWaPqMnBp1Whd2GhcbVOdFj4JofFQ-M?usp=sharing) and put the csv files into `dataset/preprocessed_data` folder.
 
-3. Run the scrip to train and test the neural network. 
+### Shell script for DL
+
+Run the scrip to train and test the neural network. 
 
 Here, we prepare three shell script for each neural network, i.e., 
 
@@ -42,12 +47,19 @@ Here, we prepare three shell script for each neural network, i.e.,
 ./cuee_scripts/LSTM-CUEE_Train.sh
 ```
 
-4. After training the model, you can perform inference only by setting `is_training` to 0 in the shell script  
+After training the model, you can perform inference only by setting `is_training` to 0 in the shell script  
 
  
 ``` 
 python -u run_longExp.py --is_training 0 ....
 ```
+### Notebook demo for LightGBM
+
+Alternatively, you look at the notebook jupyter as the demo for LightGBM:
+
+[LGBM_notebook.ipynb](LGBM_notebook.ipynb)
+
+
 
 ## Acknowledgement
 
