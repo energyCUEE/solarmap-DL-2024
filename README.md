@@ -55,7 +55,7 @@ python -u run_longExp.py --is_training 0 ....
 ```
 ### Notebook demo for LightGBM
 
-Alternatively, you look at the notebook jupyter as the demo for LightGBM:
+Alternatively, you may look at the notebook jupyter as the demo for LightGBM:
 
 [LGBM_notebook.ipynb](LGBM_notebook.ipynb)
 
