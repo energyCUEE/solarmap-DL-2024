@@ -135,7 +135,8 @@ class DatasetCUEE(data.Dataset):
         print("Foldername: [%s]" % self.folder)
         print("===============================================" )
         
-        DATA_COLUMN = ['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'is_target']
+        # DATA_COLUMN = ['Datetime', 'sitename', 'I', 'Iclr', 'latt', 'long', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'is_target']
+        DATA_COLUMN = ['Datetime', 'sitename', 'I', 'Iclr', 'CI', 'R', 'hour_encode1',  'Tnwp', 'Inwp', 'k_bar','condition', 'I_LGBM', 'is_target']
         # DATA_COLUMN: contains the list of all the info that will be considered. 
         # Datetime, sitename, is_target: will be used in  df_stamp (indexing information)
         # A subset of the DATA_COLUMN will be selected by features_list and overlap_list for the input and overlap features.
