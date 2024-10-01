@@ -12,7 +12,7 @@ batch_size=32
 target=I 
 model_name=RLSTM
 feature_type=MS
-num_features=11 
+num_features=9 
 d_model=128 
 e_layer=1
 moving_avg=4
@@ -22,7 +22,7 @@ m2_name=RLSTM
 folder_data=preprocessed_data
 checkpoints=checkpoints
 
-option_Ihat1=I
+option_Ihat1=I_wo_nwp_wo_latlong
 seq_len=5 
 python -u run_longExp.py \
     --is_training 1 \

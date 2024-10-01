@@ -13,12 +13,12 @@ target=I
 seq_len=5
 model_name=Transformer
 feature_type=MS
-num_features=11
+num_features=9
 d_model=16 
 e_layer=2
 embed_type=0
 moving_avg=4
-num_features_overlap=9
+num_features_overlap=7
 
 
 folder_data=preprocessed_data
@@ -26,7 +26,7 @@ checkpoints=checkpoints
 
 m2_name=Transformer
 
-option_Ihat1=I 
+option_Ihat1=I_wo_nwp_wo_latlong 
 
 python -u run_longExp.py \
     --is_training 1 \
