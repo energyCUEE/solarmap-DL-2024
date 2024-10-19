@@ -30,7 +30,8 @@ pip install torch torchvision torchaudio
 
 for other packages, you can install from `requirements.txt`, i.e., `pip install -r requirements.txt`
 
-2. Create a new path `dataset/preprocessed_data`. Then, download our preprocessed data from: [Google drive](https://drive.google.com/drive/folders/1vsWaPqMnBp1Whd2GhcbVOdFj4JofFQ-M?usp=sharing) and put the csv files into `dataset/preprocessed_data` folder.
+2. Create a new path `dataset/preprocessed_data` and put the csv files into `dataset/preprocessed_data` folder.
+ 
 
 ### Shell script for DL
 
